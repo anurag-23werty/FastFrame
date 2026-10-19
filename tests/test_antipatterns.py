@@ -29,10 +29,10 @@ def test_concat_growth_loop_is_collected_and_concatenated_once():
     source = "for chunk in chunks:\n    df = pd.concat([df, chunk], ignore_index=True)\n"
     assert [f.pattern for f in detect(source)] == ["AP004"]
     assert rewrite(source) == (
-        "_fastframe_parts = [df]\n"
+        "_fastframe_df_parts = [df]\n"
         "for chunk in chunks:\n"
-        "    _fastframe_parts.append(chunk)\n"
-        "df = pd.concat(_fastframe_parts, ignore_index=True)\n"
+        "    _fastframe_df_parts.append(chunk)\n"
+        "df = pd.concat(_fastframe_df_parts, ignore_index=True)\n"
     )
 
 
@@ -40,10 +40,10 @@ def test_np_append_growth_loop_is_rewritten():
     source = "for value in values:\n    arr = np.append(arr, value)\n"
     assert [f.pattern for f in detect(source)] == ["AP005"]
     assert rewrite(source) == (
-        "_fastframe_parts = [arr]\n"
+        "_fastframe_arr_parts = [arr]\n"
         "for value in values:\n"
-        "    _fastframe_parts.append(value)\n"
-        "arr = np.concatenate(_fastframe_parts)\n"
+        "    _fastframe_arr_parts.append(value)\n"
+        "arr = np.concatenate(_fastframe_arr_parts)\n"
     )
 
 

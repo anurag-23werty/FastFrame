@@ -293,14 +293,17 @@ class _Rewriter(cst.CSTTransformer):
                 piece = call.args[0].value if kind == "append" else (call.args[1].value if len(call.args) > 1 else None)
             if piece is None:
                 return updated
-            name = "_fastframe_parts"
+            # Derive a stable, collision-resistant accumulator name.  Using a
+            # single global name would make two independent growth loops share
+            # state and silently change results.
+            name = f"_fastframe_{target}_parts"
             if growth == "AP004":
                 # Keep concat keyword options (notably ignore_index) while
                 # replacing only its growing list argument.
                 options = ", " + ", ".join(self._code(arg) for arg in call.args[1:]) if len(call.args) > 1 else ""
-                suffix = f"pd.concat(_fastframe_parts{options})"
+                suffix = f"pd.concat({name}{options})"
             else:
-                suffix = "np.concatenate(_fastframe_parts)"
+                suffix = f"np.concatenate({name})"
             append_stmt = cst.parse_statement(f"{name}.append({self._code(piece)})\n")
             loop = updated.with_changes(body=cst.IndentedBlock(body=(append_stmt,)))
             init = cst.parse_statement(f"{name} = [{target}]\n")
