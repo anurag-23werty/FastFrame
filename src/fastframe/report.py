@@ -41,6 +41,23 @@ def _metric(value: object, label: str) -> str:
     return f'<div class="metric"><strong>{html.escape(str(value))}</strong><span>{html.escape(label)}</span></div>'
 
 
+def _pattern_metrics(finding: Finding, verification: VerificationResult, metrics: BenchmarkResult) -> str:
+    if finding.manual_fix:
+        badge = _badge("PASS · manual review", True)
+        result = "No code rewrite; advisory finding only"
+    else:
+        passed = verification.passed
+        badge = _badge("PASS" if passed else "FAIL", passed)
+        result = "Equivalent outputs" if passed else (verification.error or "result mismatch")
+    return f'''<div class="pattern-metrics">
+      <div><strong>Verify</strong><span>{html.escape(result)}</span></div>
+      <div><strong>Speedup</strong><span>{metrics.speedup:.2f}×</span></div>
+      <div><strong>Memory</strong><span>{metrics.memory_savings_bytes:+,} bytes ({metrics.memory_savings_percent:+.1f}%)</span></div>
+      <div><strong>Timing</strong><span>{metrics.original.median_seconds:.4f}s → {metrics.rewritten.median_seconds:.4f}s</span></div>
+      <div class="status">{badge}</div>
+    </div>'''
+
+
 def render_report(source_path: str | Path, output_path: str | Path, *, runs: int = 3) -> Path:
     source_path, output_path = Path(source_path), Path(output_path)
     source = source_path.read_text(encoding="utf-8")
@@ -77,6 +94,7 @@ def _page(
             f'''<article class="pattern">
               <div class="pattern-head"><h2>{html.escape(finding.pattern)} · {html.escape(finding.message)}</h2>{_badge(status, ok)}</div>
               <p class="meta">Line {finding.line}, column {finding.column} · Estimated saving: {finding.estimate_bytes if finding.estimate_bytes is not None else "n/a"} bytes/value</p>
+              {_pattern_metrics(finding, verification, metrics)}
               <div class="code-grid"><section><h3>Before</h3>{_code_block(before)}</section><section><h3>After</h3>{_code_block(after)}</section></div>
               <h3>Diff</h3>{_diff(before, after)}
             </article>'''
@@ -92,13 +110,14 @@ body{{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color
 main{{max-width:1180px;margin:0 auto;padding:32px 22px}} h1{{margin:0 0 4px}} h2{{font-size:18px;margin:0}} h3{{font-size:14px;color:#5f6368}}
 .subtitle{{color:#5f6368;margin:0 0 24px}} .summary,.code-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}}
 .metric,.pattern{{background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:16px;box-shadow:0 1px 2px #0000000d}}
-.metric strong{{display:block;font-size:23px}} .metric span{{color:#5f6368}} .pattern{{margin-top:18px}} .pattern-head{{display:flex;align-items:center;justify-content:space-between;gap:10px}}
+ .metric strong{{display:block;font-size:23px}} .metric span{{color:#5f6368}} .pattern{{margin-top:18px}} .pattern-head{{display:flex;align-items:center;justify-content:space-between;gap:10px}}
+ .pattern-metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:14px 0}} .pattern-metrics>div{{background:#f6f8fb;border-radius:7px;padding:9px 10px}} .pattern-metrics strong,.pattern-metrics span{{display:block}} .pattern-metrics strong{{font-size:12px;color:#5f6368;text-transform:uppercase;letter-spacing:.04em}} .pattern-metrics span{{margin-top:3px;font-size:13px}} .pattern-metrics .status{{background:transparent;padding:0;display:flex;align-items:center;justify-content:flex-end}}
 .badge{{border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;white-space:nowrap}} .pass{{background:#e6f4ea;color:#137333}} .fail{{background:#fce8e6;color:#c5221f}}
 .meta{{color:#5f6368;font-size:13px}} pre{{background:#202124;color:#f8f9fa;padding:12px;border-radius:6px;overflow:auto;min-height:42px}} code{{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}}
 table.diff{{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block}} .diff_header{{background:#e8eaed}} td{{padding:2px 5px;white-space:pre-wrap;vertical-align:top}} .diff_add{{background:#ceead6}} .diff_sub{{background:#f7caca}} .diff_chg{{background:#fce8b2}}
 </style></head><body><main>
-<h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p>
-<section class="summary">{_metric(len(findings), "patterns detected")}{_metric(speed, "speedup")}{_metric(memory, "peak memory change")}{_metric(verification_text, "result verification")}</section>
+ <h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p>
+ <section class="summary">{_metric(len(findings), "patterns detected")}{_metric(f"{metrics.original.median_seconds:.4f}s", "original median")}{_metric(f"{metrics.rewritten.median_seconds:.4f}s", "rewritten median")}{_metric(speed, "speedup")}{_metric(memory, "peak memory change")}{_metric(verification_text, "result verification")}</section>
 {''.join(rows)}
 </main></body></html>'''
 
