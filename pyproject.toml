@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.scripts]
-fastframe = "fastframe.report:main"
+fastframe = "fastframe.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
