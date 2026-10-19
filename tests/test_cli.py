@@ -1,0 +1,60 @@
+import json
+
+from typer.testing import CliRunner
+
+from fastframe.cli import app
+
+
+runner = CliRunner()
+
+
+def _script(path, body):
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def test_verify_has_readable_and_json_modes(tmp_path):
+    left = _script(tmp_path / "left.py", "print('same')\nresult = [1, 2]\n")
+    right = _script(tmp_path / "right.py", "print('same')\nresult = [1, 2]\n")
+    readable = runner.invoke(app, ["verify", str(left), str(right)])
+    assert readable.exit_code == 0
+    assert "PASS verification" in readable.stdout
+    machine = runner.invoke(app, ["verify", str(left), str(right), "--json"])
+    assert machine.exit_code == 0
+    assert json.loads(machine.stdout)["stdout_match"] is True
+
+
+def test_bench_has_readable_and_json_modes(tmp_path):
+    left = _script(tmp_path / "left.py", "result = [1, 2]\n")
+    right = _script(tmp_path / "right.py", "result = [1, 2]\n")
+    readable = runner.invoke(app, ["bench", str(left), str(right), "--runs", "1"])
+    assert readable.exit_code == 0
+    assert "Speedup:" in readable.stdout
+    machine = runner.invoke(app, ["bench", str(left), str(right), "--runs", "1", "--json"])
+    assert machine.exit_code == 0
+    assert "min_seconds" in machine.stdout
+
+
+def test_fix_verifies_diff_and_in_place_backup(tmp_path):
+    source = _script(tmp_path / "source.py", "result = [1, 2]\n")
+    output = tmp_path / "output.py"
+    fixed = runner.invoke(app, ["fix", str(source), "-o", str(output)])
+    assert fixed.exit_code == 0
+    assert "Verification passed" in fixed.stdout
+    assert output.read_text() == source.read_text()
+
+    dry_run = runner.invoke(app, ["fix", str(source), "--diff"])
+    assert dry_run.exit_code == 0
+    assert not (tmp_path / "source.py.bak").exists()
+
+    in_place = runner.invoke(app, ["fix", str(source), "--in-place"])
+    assert in_place.exit_code == 0
+    assert (tmp_path / "source.py.bak").exists()
+
+
+def test_fix_no_verify_warns(tmp_path):
+    source = _script(tmp_path / "source.py", "result = [1]\n")
+    output = tmp_path / "output.py"
+    result = runner.invoke(app, ["fix", str(source), "-o", str(output), "--no-verify"])
+    assert result.exit_code == 0
+    assert "verification skipped" in result.stdout
