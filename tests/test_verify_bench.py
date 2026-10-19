@@ -26,10 +26,33 @@ def test_verify_reports_differences(tmp_path):
 def test_verify_and_bench_ignore_script_stdout(tmp_path):
     left = tmp_path / "left.py"
     right = tmp_path / "right.py"
-    left.write_text("print('left noise')\nresult = [1, 2, 3]\n")
-    right.write_text("print('right noise')\nresult = [1, 2, 3]\n")
+    left.write_text("print('same noise')\nresult = [1, 2, 3]\n")
+    right.write_text("print('same noise')\nresult = [1, 2, 3]\n")
     assert verify_scripts(left, right).passed
     assert benchmark(left, right, runs=1).speedup > 0
+
+
+def test_verify_compares_stdout_and_original_variables(tmp_path):
+    left = tmp_path / "left.py"
+    right = tmp_path / "right.py"
+    left.write_text("print('left')\nresult = [1]\nrequired = [2]\n")
+    right.write_text("print('right')\nresult = [1]\n")
+    result = verify_scripts(left, right)
+    assert not result.passed
+    assert not result.stdout_match
+    missing = next(c for c in result.comparisons if c.name == "required")
+    assert not missing.passed
+
+
+def test_verify_runs_rewritten_from_original_directory(tmp_path):
+    data = tmp_path / "data.txt"
+    data.write_text("ok\n")
+    left = tmp_path / "left.py"
+    right = tmp_path / "nested" / "right.py"
+    right.parent.mkdir()
+    left.write_text("from pathlib import Path\nresult = [Path(__file__).parent.joinpath('data.txt').read_text()]\n")
+    right.write_text("from pathlib import Path\nresult = [Path('data.txt').read_text()]\n")
+    assert verify_scripts(left, right).passed
 
 
 def test_benchmark_has_configurable_samples_and_metrics():

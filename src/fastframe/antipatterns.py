@@ -303,7 +303,12 @@ class IterrowsRule(Rule):
         row, frame, output, value = parts
         vector = _replace(value, row, frame)
         code = cst.Module([]).code_for_node(vector)
-        return cst.parse_statement(f"{cst.Module([]).code_for_node(output)}.extend(({code}).tolist())\n")
+        replacement = cst.parse_statement(f"{cst.Module([]).code_for_node(output)}.extend(({code}).tolist())\n")
+        # Preserve the final row binding exposed by the original loop without
+        # raising on an empty frame, so verification remains a strict check.
+        frame_code = cst.Module([]).code_for_node(frame)
+        preserve_row = cst.parse_statement(f"if len({frame_code}):\n    {row} = {frame_code}.iloc[-1]\n")
+        return cst.FlattenSentinel((replacement, preserve_row))
 
 
 class DowncastRule(Rule):

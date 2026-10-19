@@ -16,7 +16,11 @@ def test_series_apply_arithmetic_is_detected_and_vectorized():
 def test_iterrows_append_is_replaced_with_extend():
     source = 'for _, row in df.iterrows():\n    values.append(row["a"] + row["b"])\n'
     assert [f.pattern for f in detect(source)] == ["AP003"]
-    assert rewrite(source) == 'values.extend((df["a"] + df["b"]).tolist())\n'
+    assert rewrite(source) == (
+        'values.extend((df["a"] + df["b"]).tolist())\n'
+        'if len(df):\n'
+        '    row = df.iloc[-1]\n'
+    )
 
 
 def test_unrelated_apply_is_unchanged():
