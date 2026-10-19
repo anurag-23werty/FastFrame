@@ -42,6 +42,21 @@ def test_notebook_code_cells_scan_and_copy_fix(tmp_path):
     assert cli_destination.exists()
 
 
+def test_notebook_fix_preserves_suppressed_and_config_ignored_cells(tmp_path):
+    (tmp_path / "pyproject.toml").write_text('[tool.fastframe]\nignore = ["AP002"]\n')
+    source = tmp_path / "demo.ipynb"
+    source.write_text(json.dumps({"cells": [
+        {"cell_type": "code", "source": ['a = df["a"].apply(lambda x: x * 2)  # fastframe: ignore\n']},
+        {"cell_type": "code", "source": ['b = df["b"].apply(lambda x: x * 2)\n']},
+    ]}))
+    destination = tmp_path / "fixed.ipynb"
+    result = runner.invoke(app, ["fix", str(source), "-o", str(destination)])
+    assert result.exit_code == 0
+    notebook = json.loads(destination.read_text())
+    assert "apply" in "".join(notebook["cells"][0]["source"])
+    assert "apply" in "".join(notebook["cells"][1]["source"])
+
+
 def test_inline_suppression_and_pyproject_config(tmp_path):
     (tmp_path / "pyproject.toml").write_text('[tool.fastframe]\nselect = ["AP002"]\nignore = []\n')
     source = tmp_path / "source.py"

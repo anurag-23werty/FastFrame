@@ -159,7 +159,7 @@ def test_scanning_suppressions_and_unsupported_files(tmp_path):
     assert scan_path(unsupported, ScanConfig()) == []
     destination = tmp_path / "nested" / "out.py"
     rewrite_path(source, destination)
-    assert destination.read_text() == rewrite(source.read_text())
+    assert destination.read_text() == rewrite(source.read_text(), config=ScanConfig())
 
 
 @pytest.mark.parametrize("dtype,saving", [("'object'", 8), ("'float64'", 4), ("{'a': 'object'}", 8), ("{'a': 'int64'}", 4), ("{'a': 'float64'}", 4)])

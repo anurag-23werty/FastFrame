@@ -57,3 +57,20 @@ def test_fix_no_verify_warns(tmp_path):
     result = runner.invoke(app, ["fix", str(source), "-o", str(output), "--no-verify"])
     assert result.exit_code == 0
     assert "verification skipped" in result.stdout
+
+
+def test_fix_preserves_inline_suppressed_python_line(tmp_path):
+    source = _script(tmp_path / "source.py", 'import pandas as pd\ndf = pd.DataFrame({"a": [1, 2]})\nout = df["a"].apply(lambda x: x * 2)  # fastframe: ignore\n')
+    output = tmp_path / "output.py"
+    result = runner.invoke(app, ["fix", str(source), "-o", str(output)])
+    assert result.exit_code == 0, result.stdout
+    assert output.read_text() == source.read_text()
+
+
+def test_fix_preserves_pyproject_ignored_python_rule(tmp_path):
+    (tmp_path / "pyproject.toml").write_text('[tool.fastframe]\nignore = ["AP002"]\n')
+    source = _script(tmp_path / "source.py", 'import pandas as pd\ndf = pd.DataFrame({"a": [1, 2]})\nout = df["a"].apply(lambda x: x * 2)\n')
+    output = tmp_path / "output.py"
+    result = runner.invoke(app, ["fix", str(source), "-o", str(output)])
+    assert result.exit_code == 0, result.stdout
+    assert output.read_text() == source.read_text()
