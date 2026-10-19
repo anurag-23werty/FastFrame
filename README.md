@@ -257,21 +257,25 @@ df["count"] = pd.to_numeric(df["count"], downcast="integer")
 ## Results: 200k-row example
 
 `examples/sales_analysis_slow.py` creates 200,000 rows with seeded RNG
-`np.random.default_rng(2026)`. The report applies one finding at a time and
-uses one benchmark run for the following captured local results:
+`np.random.default_rng(2026)`. The report keeps the combined script as the
+whole-workload measurement, while each AP001–AP005 row uses its own focused
+100k-row script from `examples/patterns/`. The following values all came from
+one `--runs 1` report generation:
 
-| Pattern | Speedup | Verification |
-|---|---:|:---:|
-| AP001 row-wise apply | 1.15× | PASS |
-| AP002 Series apply | 1.00× | PASS |
-| AP003 iterrows append | 2.65× | PASS |
-| AP004 concat growth | 1.00× | PASS |
-| AP005 `np.append` growth | 0.99× | PASS |
-| AP006 downcast advisory | advisory only | manual review |
+| Benchmark | Workload | Speedup | Verification |
+|---|---|---:|:---:|
+| AP001 row-wise apply | `examples/patterns/ap001.py` | 158.71× | PASS |
+| AP002 Series apply | `examples/patterns/ap002.py` | 13.77× | PASS |
+| AP003 iterrows append | `examples/patterns/ap003.py` | 382.52× | PASS |
+| AP004 concat growth | `examples/patterns/ap004.py` | 1.48× | PASS |
+| AP005 `np.append` growth | `examples/patterns/ap005.py` | 6.74× | PASS |
+| AP006 downcast advisory | no rewrite | advisory only | manual review |
+| Whole sales workload | `examples/sales_analysis_slow.py` (200k rows) | 13.65× | PASS |
 
 Benchmarks include subprocess execution and are machine/load dependent. The
-HTML report contains the complete per-pattern timing, memory, code, diff, and
-badge details.
+focused scripts are sized to make the slow form measurable; AP004 uses about
+500 chunks and AP005 uses 20,000 appends. The HTML report contains the complete
+per-pattern timing, memory, code, diff, and badge details.
 
 ## Safety guarantees
 
@@ -315,8 +319,8 @@ uv run --no-sync mypy
 Real local result:
 
 ```text
-82 passed
-Required test coverage of 90% reached. Total coverage: 94.34%
+90 passed
+Required test coverage of 90% reached. Total coverage: 94.39%
 ```
 
 GitHub Actions runs Ruff, mypy, coverage tests, Docker build, and the offline
