@@ -15,7 +15,30 @@ compares their results and stdout. Runtime has no LLM or network dependency.
 
 ## Install
 
+### End users
+
+After FastFrame is published to PyPI, a user with Python 3.12 can install it
+without cloning this repository:
+
+```bash
+python -m pip install fastframe
+```
+
+This installs the `fastframe` command. For example:
+
+```bash
+fastframe scan my_script.py
+fastframe fix my_script.py -o my_script_fast.py
+fastframe verify my_script.py my_script_fast.py
+fastframe bench my_script.py my_script_fast.py --runs 5
+```
+
+FastFrame executes supplied scripts during `fix` verification, `verify`, and
+`bench`; do not run it on untrusted scripts without a separate sandbox.
+
 ### uv
+
+For contributors working from the source repository:
 
 ```bash
 uv sync --locked --extra test
