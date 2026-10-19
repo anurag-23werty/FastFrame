@@ -1,0 +1,6 @@
+- id: fastframe-scan
+  name: FastFrame scan
+  description: Detect slow pandas and NumPy anti-patterns
+  entry: fastframe scan
+  language: python
+  types: [python]
