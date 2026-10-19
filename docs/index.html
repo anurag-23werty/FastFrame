@@ -13,16 +13,16 @@ main{max-width:1180px;margin:0 auto;padding:32px 22px} h1{margin:0 0 4px} h2{fon
 table.diff{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block} .diff_header{background:#e8eaed} td{padding:2px 5px;white-space:pre-wrap;vertical-align:top} .diff_add{background:#ceead6} .diff_sub{background:#f7caca} .diff_chg{background:#fce8b2}
 </style></head><body><main>
  <h1>FastFrame anti-pattern report</h1><p class="subtitle">sales_analysis_slow.py · deterministic rewrite and subprocess verification</p>
- <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>0.2782s</strong><span>original median</span></div><div class="metric"><strong>0.0204s</strong><span>rewritten median</span></div><div class="metric"><strong>13.65×</strong><span>speedup</span></div><div class="metric"><strong>+1,891 bytes (+0.0%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
+ <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>1.1700s</strong><span>original median</span></div><div class="metric"><strong>0.0633s</strong><span>rewritten median</span></div><div class="metric"><strong>18.50×</strong><span>speedup</span></div><div class="metric"><strong>+1,891 bytes (+0.0%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
 <article class="pattern">
               <div class="pattern-head"><h2>AP001 · row-wise DataFrame.apply arithmetic</h2><span class="badge pass">PASS</span></div>
               <p class="meta">Line 8, column 9 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>158.71×</span></div>
-      <div><strong>Memory</strong><span>+17,050,886 bytes (+84.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2370s → 0.0015s</span></div>
-      <div><strong>Timing min</strong><span>0.2370s → 0.0015s</span></div>
+      <div><strong>Speedup</strong><span>147.32×</span></div>
+      <div><strong>Memory</strong><span>+17,050,931 bytes (+84.0%)</span></div>
+      <div><strong>Timing median</strong><span>0.8150s → 0.0055s</span></div>
+      <div><strong>Timing min</strong><span>0.8150s → 0.0055s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>rng = np.random.default_rng(1001)
@@ -49,10 +49,10 @@ result = df[&quot;a&quot;] + df[&quot;b&quot;]
               <p class="meta">Line 8, column 9 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>13.77×</span></div>
+      <div><strong>Speedup</strong><span>12.01×</span></div>
       <div><strong>Memory</strong><span>+5,000,630 bytes (+75.1%)</span></div>
-      <div><strong>Timing median</strong><span>0.0150s → 0.0011s</span></div>
-      <div><strong>Timing min</strong><span>0.0150s → 0.0011s</span></div>
+      <div><strong>Timing median</strong><span>0.0476s → 0.0040s</span></div>
+      <div><strong>Timing min</strong><span>0.0476s → 0.0040s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>rng = np.random.default_rng(1002)
@@ -79,10 +79,10 @@ result = df[&quot;a&quot;] * 2
               <p class="meta">Line 9, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>382.52×</span></div>
-      <div><strong>Memory</strong><span>+1,599,450 bytes (+32.9%)</span></div>
-      <div><strong>Timing median</strong><span>0.8077s → 0.0021s</span></div>
-      <div><strong>Timing min</strong><span>0.8077s → 0.0021s</span></div>
+      <div><strong>Speedup</strong><span>436.25×</span></div>
+      <div><strong>Memory</strong><span>+1,599,440 bytes (+32.9%)</span></div>
+      <div><strong>Timing median</strong><span>3.0502s → 0.0070s</span></div>
+      <div><strong>Timing min</strong><span>3.0502s → 0.0070s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>df = pd.DataFrame({&quot;a&quot;: rng.integers(1, 100, 100_000), &quot;b&quot;: rng.integers(1, 100, 100_000)})
@@ -110,21 +110,21 @@ if len(df):
         </tbody>
     </table>
             </article><article class="pattern">
-              <div class="pattern-head"><h2>AP004 · growing DataFrame with concat/append in a loop</h2><span class="badge pass">PASS</span></div>
+              <div class="pattern-head"><h2>AP004 · growing DataFrame with concat/append in a loop</h2><span class="badge fail">FAIL</span></div>
               <p class="meta">Line 9, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
-      <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.48×</span></div>
-      <div><strong>Memory</strong><span>-2,562,988 bytes (-139.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.0415s → 0.0281s</span></div>
-      <div><strong>Timing min</strong><span>0.0415s → 0.0281s</span></div>
-      <div class="status"><span class="badge pass">PASS</span></div>
+      <div><strong>Verify</strong><span>The truth value of a DataFrame is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().</span></div>
+      <div><strong>Speedup</strong><span>6.23×</span></div>
+      <div><strong>Memory</strong><span>-1,115,951 bytes (-3.6%)</span></div>
+      <div><strong>Timing median</strong><span>2.3260s → 0.3732s</span></div>
+      <div><strong>Timing min</strong><span>2.3260s → 0.3732s</span></div>
+      <div class="status"><span class="badge fail">FAIL</span></div>
     </div>
-              <div class="code-grid"><section><h3>Before</h3><pre><code>chunks = (pd.DataFrame({&quot;value&quot;: rng.integers(1, 100, 200)}) for _ in range(500))
+              <div class="code-grid"><section><h3>Before</h3><pre><code>chunks = [pd.DataFrame({&quot;value&quot;: rng.integers(1, 100, 500)}) for _ in range(2_000)]
 result = pd.DataFrame({&quot;value&quot;: []})
 for chunk in chunks:
     result = pd.concat([result, chunk], ignore_index=True)
-</code></pre></section><section><h3>After</h3><pre><code>chunks = (pd.DataFrame({&quot;value&quot;: rng.integers(1, 100, 200)}) for _ in range(500))
+</code></pre></section><section><h3>After</h3><pre><code>chunks = [pd.DataFrame({&quot;value&quot;: rng.integers(1, 100, 500)}) for _ in range(2_000)]
 result = pd.DataFrame({&quot;value&quot;: []})
 _fastframe_result_parts = [result]
 for chunk in chunks:
@@ -137,7 +137,7 @@ for chunk in chunks:
         <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
         <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">Before</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">After</th></tr></thead>
         <tbody>
-            <tr><td class="diff_next" id="difflib_chg_to3__0"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="from3_1">1</td><td nowrap="nowrap">chunks&nbsp;=&nbsp;(pd.DataFrame({"value":&nbsp;rng.integers(1,&nbsp;100,&nbsp;200)})&nbsp;for&nbsp;_&nbsp;in&nbsp;range(500))</td><td class="diff_next"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="to3_1">1</td><td nowrap="nowrap">chunks&nbsp;=&nbsp;(pd.DataFrame({"value":&nbsp;rng.integers(1,&nbsp;100,&nbsp;200)})&nbsp;for&nbsp;_&nbsp;in&nbsp;range(500))</td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to3__0"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="from3_1">1</td><td nowrap="nowrap">chunks&nbsp;=&nbsp;[pd.DataFrame({"value":&nbsp;rng.integers(1,&nbsp;100,&nbsp;500)})&nbsp;for&nbsp;_&nbsp;in&nbsp;range(2_000)]</td><td class="diff_next"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="to3_1">1</td><td nowrap="nowrap">chunks&nbsp;=&nbsp;[pd.DataFrame({"value":&nbsp;rng.integers(1,&nbsp;100,&nbsp;500)})&nbsp;for&nbsp;_&nbsp;in&nbsp;range(2_000)]</td></tr>
             <tr><td class="diff_next" id="difflib_chg_to3__1"></td><td class="diff_header" id="from3_2">2</td><td nowrap="nowrap">result&nbsp;=&nbsp;pd.DataFrame({"value":&nbsp;[]})</td><td class="diff_next"></td><td class="diff_header" id="to3_2">2</td><td nowrap="nowrap">result&nbsp;=&nbsp;pd.DataFrame({"value":&nbsp;[]})</td></tr>
             <tr><td class="diff_next"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header" id="to3_3">3</td><td nowrap="nowrap"><span class="diff_add">_fastframe_result_parts&nbsp;=&nbsp;[result]</span></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from3_3">3</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;chunks:</td><td class="diff_next"></td><td class="diff_header" id="to3_4">4</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;chunks:</td></tr>
@@ -149,10 +149,10 @@ for chunk in chunks:
               <p class="meta">Line 8, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>6.74×</span></div>
-      <div><strong>Memory</strong><span>-4,812,636 bytes (-919.3%)</span></div>
-      <div><strong>Timing median</strong><span>0.0803s → 0.0119s</span></div>
-      <div><strong>Timing min</strong><span>0.0803s → 0.0119s</span></div>
+      <div><strong>Speedup</strong><span>5.88×</span></div>
+      <div><strong>Memory</strong><span>-4,812,546 bytes (-919.3%)</span></div>
+      <div><strong>Timing median</strong><span>0.2203s → 0.0375s</span></div>
+      <div><strong>Timing min</strong><span>0.2203s → 0.0375s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>values = rng.integers(1, 100, 20_000)
