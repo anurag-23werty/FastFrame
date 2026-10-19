@@ -36,6 +36,36 @@ fastframe bench my_script.py my_script_fast.py --runs 5
 FastFrame executes supplied scripts during `fix` verification, `verify`, and
 `bench`; do not run it on untrusted scripts without a separate sandbox.
 
+### Maintainers: publish with GitHub Actions
+
+Releases are published through PyPI Trusted Publishing, so no PyPI API token
+is stored in GitHub. Configure a pending publisher in PyPI with these values:
+
+| PyPI field | Value |
+|---|---|
+| PyPI project name | `fastframe-pandas` |
+| Owner | `anurag-23werty` |
+| Repository name | `FastFrame` |
+| Workflow name | `.github/workflows/publish.yml` |
+| Environment name | `pypi` |
+
+The `pypi` environment must also exist in the GitHub repository under
+**Settings → Environments**. After the pending publisher is configured, bump
+the version in `pyproject.toml`, update `uv.lock`, commit the release, and push
+a matching tag:
+
+```bash
+uv lock
+git add pyproject.toml uv.lock
+git commit -m "release: v0.1.1"
+git tag v0.1.1
+git push origin main --tags
+```
+
+The workflow builds both the wheel and source distribution and publishes them
+when the tag reaches GitHub. The tag version and `pyproject.toml` version must
+match, and a version already uploaded to PyPI cannot be reused.
+
 ### uv
 
 For contributors working from the source repository:
