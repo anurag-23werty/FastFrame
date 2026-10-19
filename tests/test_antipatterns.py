@@ -36,7 +36,8 @@ def test_concat_growth_loop_is_collected_and_concatenated_once():
         "_fastframe_df_parts = [df]\n"
         "for chunk in chunks:\n"
         "    _fastframe_df_parts.append(chunk)\n"
-        "df = pd.concat(_fastframe_df_parts, ignore_index=True)\n"
+        "if len(_fastframe_df_parts) > 1:\n"
+        "    df = pd.concat(_fastframe_df_parts, ignore_index=True)\n"
     )
 
 
@@ -47,7 +48,8 @@ def test_np_append_growth_loop_is_rewritten():
         "_fastframe_arr_parts = [arr]\n"
         "for value in values:\n"
         "    _fastframe_arr_parts.append(np.atleast_1d(value))\n"
-        "arr = np.concatenate(_fastframe_arr_parts)\n"
+        "if len(_fastframe_arr_parts) > 1:\n"
+        "    arr = np.concatenate(_fastframe_arr_parts)\n"
     )
 
 

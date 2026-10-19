@@ -264,7 +264,8 @@ class _GrowthRule(Rule):
             piece_code = f"np.atleast_1d({cst.Module([]).code_for_node(piece)})"
         append = cst.parse_statement(f"{name}.append({piece_code})\n")
         loop = node.with_changes(body=cst.IndentedBlock(body=(append,)))
-        return cst.FlattenSentinel((cst.parse_statement(f"{name} = [{target}]\n"), loop, cst.parse_statement(f"{target} = {suffix}\n")))
+        finalize = cst.parse_statement(f"if len({name}) > 1:\n    {target} = {suffix}\n")
+        return cst.FlattenSentinel((cst.parse_statement(f"{name} = [{target}]\n"), loop, finalize))
 
 
 class ConcatRule(_GrowthRule):
