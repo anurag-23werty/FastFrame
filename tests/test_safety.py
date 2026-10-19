@@ -1,6 +1,5 @@
 from fastframe import detect, rewrite
 
-
 UNSAFE_CASES = [
     'df["a"].apply(lambda s: len(s) * 2);\n',
     'df["a"].apply(lambda x: math.sqrt(x) + 1);\n',

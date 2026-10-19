@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import re
 import tomllib
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator, Optional
 
 from .antipatterns import Finding, detect, rewrite
 
@@ -17,7 +17,7 @@ _SUPPRESSION = re.compile(r"#\s*fastframe:\s*ignore(?:\[([^\]]+)\])?", re.IGNORE
 class ScanItem:
     path: Path
     finding: Finding
-    cell: Optional[int] = None
+    cell: int | None = None
 
     @property
     def location(self) -> str:
@@ -93,7 +93,7 @@ def _notebook_items(path: Path, config: ScanConfig) -> Iterator[ScanItem]:
                 yield ScanItem(path, finding, cell_number)
 
 
-def scan_path(path: str | Path, config: Optional[ScanConfig] = None) -> list[ScanItem]:
+def scan_path(path: str | Path, config: ScanConfig | None = None) -> list[ScanItem]:
     path = Path(path)
     config = config or load_config(path)
     if path.is_dir():

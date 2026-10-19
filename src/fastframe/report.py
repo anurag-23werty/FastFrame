@@ -8,7 +8,6 @@ import html
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from .antipatterns import Finding, detect, rewrite
 from .bench import BenchmarkResult, benchmark
@@ -20,8 +19,8 @@ class PatternResult:
     finding: Finding
     before: str
     after: str
-    verification: Optional[VerificationResult]
-    metrics: Optional[BenchmarkResult]
+    verification: VerificationResult | None
+    metrics: BenchmarkResult | None
 
 
 def _badge(label: str, ok: bool) -> str:
@@ -79,9 +78,9 @@ def _pattern_metrics(result: PatternResult) -> str:
     </div>'''
 
 
-def _pattern_results(source_path: Path, source: str, findings: List[Finding], temp: Path, runs: int) -> List[PatternResult]:
-    counts: Dict[str, int] = {}
-    results: List[PatternResult] = []
+def _pattern_results(source_path: Path, source: str, findings: list[Finding], temp: Path, runs: int) -> list[PatternResult]:
+    counts: dict[str, int] = {}
+    results: list[PatternResult] = []
     for finding in findings:
         before = _snippet(source, finding)
         if finding.manual_fix:
@@ -122,8 +121,8 @@ def render_report(source_path: str | Path, output_path: str | Path, *, runs: int
 def _page(
     source_path: Path,
     source: str,
-    findings: List[Finding],
-    patterns: List[PatternResult],
+    findings: list[Finding],
+    patterns: list[PatternResult],
     verification: VerificationResult,
     metrics: BenchmarkResult,
 ) -> str:
@@ -168,7 +167,7 @@ table.diff{{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse
 </main></body></html>'''
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="create an HTML FastFrame anti-pattern report")
     parser.add_argument("source")
     parser.add_argument("--html", required=True)

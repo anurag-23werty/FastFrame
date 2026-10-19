@@ -13,9 +13,10 @@ import json
 import pickle
 import subprocess
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 SUBPROCESS_TIMEOUT_SECONDS = 60
 
@@ -49,14 +50,14 @@ class VariableComparison:
 @dataclass
 class VerificationResult:
     passed: bool
-    comparisons: List[VariableComparison] = field(default_factory=list)
-    variables: List[str] = field(default_factory=list)
+    comparisons: list[VariableComparison] = field(default_factory=list)
+    variables: list[str] = field(default_factory=list)
     stdout_original: str = ""
     stdout_rewritten: str = ""
     stdout_match: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return {
             "passed": self.passed,
             "variables": self.variables,
@@ -68,7 +69,7 @@ class VerificationResult:
         }
 
 
-def _run(path: Path, cwd: Path) -> Dict[str, Any]:
+def _run(path: Path, cwd: Path) -> dict[str, Any]:
     try:
         proc = subprocess.run(
             [sys.executable, "-c", _CHILD, str(path)],
@@ -109,7 +110,7 @@ def _compare(left: Any, right: Any, *, rtol: float, atol: float) -> None:
         raise AssertionError(f"different types ({type(left).__name__}, {type(right).__name__})")
 
 
-def verify_scripts(original: str | Path, rewritten: str | Path, names: Optional[Iterable[str]] = None, *, rtol: float = 1e-7, atol: float = 1e-12) -> VerificationResult:
+def verify_scripts(original: str | Path, rewritten: str | Path, names: Iterable[str] | None = None, *, rtol: float = 1e-7, atol: float = 1e-12) -> VerificationResult:
     """Run two scripts and compare matching top-level result variables."""
     try:
         original_path, rewritten_path = Path(original).resolve(), Path(rewritten).resolve()
@@ -150,9 +151,11 @@ def verify_scripts(original: str | Path, rewritten: str | Path, names: Optional[
 verify = verify_scripts
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="verify two FastFrame scripts")
-    parser.add_argument("original"); parser.add_argument("rewritten"); parser.add_argument("--name", action="append", dest="names")
+    parser.add_argument("original")
+    parser.add_argument("rewritten")
+    parser.add_argument("--name", action="append", dest="names")
     args = parser.parse_args(argv)
     result = verify_scripts(args.original, args.rewritten, args.names)
     print(json.dumps(result.as_dict(), indent=2))

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import List, Optional, Sequence, Tuple
+from typing import cast
 
 import libcst as cst
-from libcst.metadata import MetadataWrapper, PositionProvider
+from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
+
+type RewriteResult = cst.CSTNode | cst.FlattenSentinel[cst.BaseStatement] | None
 
 
 @dataclass(frozen=True)
@@ -15,7 +18,7 @@ class Finding:
     line: int
     column: int
     message: str
-    estimate_bytes: Optional[int] = None
+    estimate_bytes: int | None = None
     manual_fix: bool = False
 
     @property
@@ -37,19 +40,19 @@ PATTERN_MESSAGES = {
 }
 
 
-def _attr(node: cst.CSTNode, name: str) -> Optional[cst.Attribute]:
+def _attr(node: cst.CSTNode, name: str) -> cst.Attribute | None:
     return node if isinstance(node, cst.Attribute) and node.attr.value == name else None
 
 
-def _call_attr(call: cst.Call, name: str) -> Optional[cst.Attribute]:
+def _call_attr(call: cst.Call, name: str) -> cst.Attribute | None:
     return _attr(call.func, name)
 
 
-def _lambda(call: cst.Call) -> Optional[cst.Lambda]:
+def _lambda(call: cst.Call) -> cst.Lambda | None:
     return call.args[0].value if call.args and isinstance(call.args[0].value, cst.Lambda) else None
 
 
-def _param(lam: cst.Lambda) -> Optional[str]:
+def _param(lam: cst.Lambda) -> str | None:
     return lam.params.params[0].name.value if len(lam.params.params) == 1 and isinstance(lam.params.params[0].name, cst.Name) else None
 
 
@@ -116,10 +119,11 @@ def _replace(node: cst.BaseExpression, name: str, replacement: cst.BaseExpressio
         def leave_Name(self, original: cst.Name, updated: cst.Name) -> cst.BaseExpression:
             return replacement if original.value == name else updated
 
-    return node.visit(Replace())
+    # This transformer replaces expressions only, never removing or flattening nodes.
+    return cast(cst.BaseExpression, node.visit(Replace()))
 
 
-def _literal_text(node: cst.CSTNode) -> Optional[str]:
+def _literal_text(node: cst.CSTNode) -> str | None:
     return node.value[1:-1] if isinstance(node, cst.SimpleString) and len(node.value) >= 2 else None
 
 
@@ -159,7 +163,7 @@ class Rule:
     def match(self, node: cst.CSTNode) -> bool:
         raise NotImplementedError
 
-    def rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def rewrite(self, node: cst.CSTNode) -> RewriteResult:
         return None
 
 
@@ -172,13 +176,15 @@ class ApplyRule(Rule):
         if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or _axis_one(node):
             return False
         lam = _lambda(node)
+        assert isinstance(node.func, cst.Attribute)
         return bool(lam and _receiver_safe(node.func.value) and (p := _param(lam)) and _safe_expr(lam.body, p, allow_bare=True))
 
-    def rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def rewrite(self, node: cst.CSTNode) -> cst.CSTNode | None:
         if not self.match(node) or not isinstance(node, cst.Call):
             return None
         lam = _lambda(node)
         assert lam is not None
+        assert isinstance(node.func, cst.Attribute)
         return _replace(lam.body, _param(lam) or "", node.func.value)
 
 
@@ -191,17 +197,19 @@ class RowApplyRule(Rule):
         if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or not _axis_one(node):
             return False
         lam = _lambda(node)
+        assert isinstance(node.func, cst.Attribute)
         return bool(lam and _receiver_safe(node.func.value) and (p := _param(lam)) and _safe_expr(lam.body, p, allow_bare=False))
 
-    def rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def rewrite(self, node: cst.CSTNode) -> cst.CSTNode | None:
         if not self.match(node) or not isinstance(node, cst.Call):
             return None
         lam = _lambda(node)
         assert lam is not None
+        assert isinstance(node.func, cst.Attribute)
         return _replace(lam.body, _param(lam) or "", node.func.value)
 
 
-def _growth(node: cst.For) -> Optional[Tuple[str, str, cst.Call, cst.BaseExpression]]:
+def _growth(node: cst.For) -> tuple[str, str, cst.Call, cst.BaseExpression] | None:
     if not isinstance(node.body, cst.IndentedBlock) or len(node.body.body) != 1:
         return None
     stmt = node.body.body[0]
@@ -231,7 +239,7 @@ def _growth(node: cst.For) -> Optional[Tuple[str, str, cst.Call, cst.BaseExpress
 
 
 class _GrowthRule(Rule):
-    def __init__(self, pattern: str):
+    def __init__(self, pattern: str) -> None:
         self.id = pattern
         self.title = PATTERN_MESSAGES[pattern]
         self.explanation = "Collect loop pieces and concatenate once."
@@ -239,7 +247,7 @@ class _GrowthRule(Rule):
     def match(self, node: cst.CSTNode) -> bool:
         return isinstance(node, cst.For) and (_growth(node) or ())[0:1] == (self.id,)
 
-    def rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def rewrite(self, node: cst.CSTNode) -> RewriteResult:
         if not isinstance(node, cst.For):
             return None
         found = _growth(node)
@@ -277,7 +285,7 @@ class IterrowsRule(Rule):
     def match(self, node: cst.CSTNode) -> bool:
         return self._parts(node) is not None
 
-    def _parts(self, node: cst.CSTNode):
+    def _parts(self, node: cst.CSTNode) -> tuple[str, cst.BaseExpression, cst.BaseExpression, cst.BaseExpression] | None:
         if not isinstance(node, cst.For) or not isinstance(node.iter, cst.Call) or not _call_attr(node.iter, "iterrows"):
             return None
         if not isinstance(node.target, cst.Tuple) or len(node.target.elements) != 2 or not isinstance(node.target.elements[0].value, cst.Name) or not isinstance(node.target.elements[1].value, cst.Name):
@@ -294,9 +302,11 @@ class IterrowsRule(Rule):
         value = expr.args[0].value
         if not _safe_expr(value, row, allow_bare=False):
             return None
+        assert isinstance(node.iter.func, cst.Attribute)
+        assert isinstance(expr.func, cst.Attribute)
         return row, node.iter.func.value, expr.func.value, value
 
-    def rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def rewrite(self, node: cst.CSTNode) -> RewriteResult:
         parts = self._parts(node)
         if parts is None:
             return None
@@ -323,7 +333,7 @@ class DowncastRule(Rule):
 RULES: Sequence[Rule] = (RowApplyRule(), ApplyRule(), IterrowsRule(), ConcatRule(), NpAppendRule(), DowncastRule())
 
 
-def rule_by_id(pattern: str) -> Optional[Rule]:
+def rule_by_id(pattern: str) -> Rule | None:
     return next((rule for rule in RULES if rule.id == pattern.upper()), None)
 
 
@@ -331,7 +341,7 @@ class _Detector(cst.CSTVisitor):
     METADATA_DEPENDENCIES = (PositionProvider,)
 
     def __init__(self) -> None:
-        self.findings: List[Tuple[cst.CSTNode, Rule, object]] = []
+        self.findings: list[tuple[cst.CSTNode, Rule, CodeRange]] = []
 
     def _visit(self, node: cst.CSTNode) -> None:
         for rule in RULES:
@@ -346,24 +356,28 @@ class _Detector(cst.CSTVisitor):
         self._visit(node)
 
 
-def detect(source: str) -> List[Finding]:
+def detect(source: str) -> list[Finding]:
     module = cst.parse_module(source)
     detector = _Detector()
     wrapper = MetadataWrapper(module)
     wrapper.visit(detector)
     result = []
     for node, rule, pos in detector.findings:
-        result.append(Finding(rule.id, pos.start.line, pos.start.column, rule.title, _downcast_saving(node) if rule.id == "AP006" else None, rule.id == "AP006"))
+        estimate_bytes = None
+        if rule.id == "AP006":
+            assert isinstance(node, cst.Call)
+            estimate_bytes = _downcast_saving(node)
+        result.append(Finding(rule.id, pos.start.line, pos.start.column, rule.title, estimate_bytes, rule.id == "AP006"))
     return result
 
 
 class _Rewriter(cst.CSTTransformer):
-    def __init__(self, pattern: Optional[str] = None, occurrence: Optional[int] = None) -> None:
+    def __init__(self, pattern: str | None = None, occurrence: int | None = None) -> None:
         self.pattern = pattern
         self.occurrence = occurrence
         self._matched = 0
 
-    def _rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
+    def _rewrite(self, node: cst.CSTNode) -> RewriteResult:
         for rule in RULES:
             if self.pattern is not None and rule.id != self.pattern:
                 continue
@@ -379,13 +393,21 @@ class _Rewriter(cst.CSTTransformer):
         return None
 
     def leave_Call(self, original: cst.Call, updated: cst.Call) -> cst.BaseExpression:
-        return self._rewrite(original) or updated  # type: ignore[return-value]
+        replacement = self._rewrite(original)
+        if replacement is None:
+            return updated
+        assert isinstance(replacement, cst.BaseExpression)
+        return replacement
 
-    def leave_For(self, original: cst.For, updated: cst.For) -> cst.BaseStatement:
-        return self._rewrite(original) or updated  # type: ignore[return-value]
+    def leave_For(self, original: cst.For, updated: cst.For) -> cst.BaseStatement | cst.FlattenSentinel[cst.BaseStatement]:
+        replacement = self._rewrite(original)
+        if replacement is None:
+            return updated
+        assert isinstance(replacement, (cst.BaseStatement, cst.FlattenSentinel))
+        return replacement
 
 
-def rewrite(source: str, pattern: Optional[str] = None, occurrence: Optional[int] = None) -> str:
+def rewrite(source: str, pattern: str | None = None, occurrence: int | None = None) -> str:
     """Rewrite all rules, or one rule occurrence when requested."""
     if occurrence is not None and occurrence < 1:
         raise ValueError("occurrence must be at least 1")

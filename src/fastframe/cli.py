@@ -7,17 +7,16 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.table import Table
 
-from .antipatterns import RULES, detect, rewrite, rule_by_id
+from .antipatterns import RULES, rewrite, rule_by_id
 from .bench import benchmark
 from .report import render_report
 from .scan import rewrite_path, scan_path
-from .verify import verify_scripts
+from .verify import VerificationResult, verify_scripts
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -44,7 +43,7 @@ def scan(file: Path, format: str = typer.Option("text", "--format")) -> None:
 @app.command()
 def fix(
     file: Path,
-    output: Optional[Path] = typer.Option(None, "-o", "--output"),
+    output: Path | None = typer.Option(None, "-o", "--output"),
     diff: bool = typer.Option(False, "--diff", help="Print the diff without writing a file."),
     in_place: bool = typer.Option(False, "--in-place", help="Rewrite the input and keep a .bak copy."),
     no_verify: bool = typer.Option(False, "--no-verify", help="Skip equivalence verification (unsafe)."),
@@ -101,7 +100,7 @@ def fix(
     console.print("".join(difflib.unified_diff(before.splitlines(True), after.splitlines(True), str(file), str(destination))))
 
 
-def _print_verification(result) -> None:
+def _print_verification(result: VerificationResult) -> None:
     status = "PASS" if result.passed else "FAIL"
     console.print(f"[green]{status}[/green] verification" if result.passed else f"[red]{status}[/red] verification")
     table = Table("Variable", "Status", "Details")

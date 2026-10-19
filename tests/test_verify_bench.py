@@ -3,7 +3,6 @@ from pathlib import Path
 from fastframe.bench import benchmark
 from fastframe.verify import verify_scripts
 
-
 ROOT = Path(__file__).parents[1]
 
 

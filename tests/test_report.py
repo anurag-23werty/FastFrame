@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from fastframe.report import render_report
 

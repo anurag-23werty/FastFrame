@@ -5,7 +5,6 @@ from typer.testing import CliRunner
 from fastframe.cli import app
 from fastframe.scan import rewrite_notebook, scan_path
 
-
 runner = CliRunner()
 
 

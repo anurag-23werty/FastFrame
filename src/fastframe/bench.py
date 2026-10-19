@@ -9,7 +9,6 @@ import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
 
 SUBPROCESS_TIMEOUT_SECONDS = 60
 
@@ -44,8 +43,8 @@ class ScriptStats:
     median_seconds: float
     min_seconds: float
     peak_memory_bytes: int
-    samples_seconds: List[float]
-    samples_memory_bytes: List[int]
+    samples_seconds: list[float]
+    samples_memory_bytes: list[int]
 
 
 @dataclass
@@ -56,7 +55,7 @@ class BenchmarkResult:
     memory_savings_bytes: int
     memory_savings_percent: float
 
-    def as_dict(self) -> Dict[str, object]:
+    def as_dict(self) -> dict[str, object]:
         return asdict(self)
 
 
@@ -102,7 +101,7 @@ def benchmark(original: str | Path, rewritten: str | Path, *, runs: int = 5) -> 
 bench = benchmark
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="benchmark two FastFrame scripts")
     parser.add_argument("original")
     parser.add_argument("rewritten")
