@@ -54,6 +54,9 @@ def test_inline_suppression_and_pyproject_config(tmp_path):
     items = scan_path(source)
     assert [item.finding.pattern for item in items] == ["AP002"]
 
+    (tmp_path / "pyproject.toml").write_text('[tool.fastframe]\nselect = []\nignore = ["AP002"]\n')
+    assert scan_path(source) == []
+
 
 def test_rules_and_explain_commands():
     listed = runner.invoke(app, ["rules"])
