@@ -9,7 +9,7 @@ forms with LibCST, and verifies or benchmarks two scripts.
 Python 3.12 and `uv` are required. Dependencies are pinned by `uv.lock`.
 
 ```bash
-uv sync --extra test
+uv sync --locked --extra test
 ```
 
 ## Test
@@ -17,6 +17,9 @@ uv sync --extra test
 ```bash
 make test
 ```
+
+The test command is offline-safe after setup: it uses the already-installed
+locked environment and does not resolve or download packages.
 
 ## Current core APIs
 
@@ -33,9 +36,11 @@ All analysis and execution is local; no network or LLM calls are used.
 
 ```bash
 docker build -t fastframe .
-docker run --rm fastframe
+docker run --rm --network none fastframe make test
 ```
 
-The CLI surface and HTML reporting are scheduled for the next implementation
-step; the current commit contains the tested detection, rewrite, verification,
-and benchmarking core.
+The CLI supports `scan`, `fix`, `verify`, `bench`, and `report`; for example:
+
+```bash
+uv run fastframe report examples/sales_analysis_slow.py --html docs/index.html
+```
