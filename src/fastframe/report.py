@@ -157,17 +157,20 @@ def _page(
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FastFrame report · {html.escape(source_path.name)}</title>
 <style>
-body{{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#202124;background:#f6f8fb;margin:0}}
-main{{max-width:1180px;margin:0 auto;padding:32px 22px}} h1{{margin:0 0 4px}} h2{{font-size:18px;margin:0}} h3{{font-size:14px;color:#5f6368}}
-.subtitle{{color:#5f6368;margin:0 0 24px}} .summary,.code-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}}
-.metric,.pattern{{background:#fff;border:1px solid #dfe3e8;border-radius:10px;padding:16px;box-shadow:0 1px 2px #0000000d}}
+ body{{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#202124;background:linear-gradient(135deg,#f7f9fc 0%,#eef4ff 50%,#f8f5ff 100%);margin:0}}
+ main{{max-width:1180px;margin:0 auto;padding:32px 22px}} h1{{margin:0 0 4px;color:#172554}} h2{{font-size:18px;margin:0}} h3{{font-size:14px;color:#5f6368}}
+ .subtitle{{color:#5f6368;margin:0 0 12px}} .hero-tags{{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 24px}} .hero-tag{{border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700;color:#fff;background:#2563eb}} .hero-tag:nth-child(2){{background:#7c3aed}} .hero-tag:nth-child(3){{background:#059669}} .hero-tag:nth-child(4){{background:#ea580c}}
+ .summary,.code-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}}
+ .metric,.pattern{{background:#fff;border:1px solid #dbe3f0;border-radius:12px;padding:16px;box-shadow:0 8px 24px #1e3a8a12}}
+ .quickstart{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:0 0 18px}} .quickstart-card{{background:#172554;color:#eff6ff;border-radius:12px;padding:14px 16px}} .quickstart-card h2{{font-size:15px;margin:0 0 7px}} .quickstart-card code{{display:block;color:#bfdbfe;font-size:12px;white-space:pre-wrap}}
  .metric strong{{display:block;font-size:23px}} .metric span{{color:#5f6368}} .pattern{{margin-top:18px}} .pattern-head{{display:flex;align-items:center;justify-content:space-between;gap:10px}}
  .pattern-metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:14px 0}} .pattern-metrics>div{{background:#f6f8fb;border-radius:7px;padding:9px 10px}} .pattern-metrics strong,.pattern-metrics span{{display:block}} .pattern-metrics strong{{font-size:12px;color:#5f6368;text-transform:uppercase;letter-spacing:.04em}} .pattern-metrics span{{margin-top:3px;font-size:13px}} .pattern-metrics .status{{background:transparent;padding:0;display:flex;align-items:center;justify-content:flex-end}}
 .badge{{border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;white-space:nowrap}} .pass{{background:#e6f4ea;color:#137333}} .fail{{background:#fce8e6;color:#c5221f}}
 .meta{{color:#5f6368;font-size:13px}} pre{{background:#202124;color:#f8f9fa;padding:12px;border-radius:6px;overflow:auto;min-height:42px}} code{{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}}
 table.diff{{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block}} .diff_header{{background:#e8eaed}} td{{padding:2px 5px;white-space:pre-wrap;vertical-align:top}} .diff_add{{background:#ceead6}} .diff_sub{{background:#f7caca}} .diff_chg{{background:#fce8b2}}
-</style></head><body><main>
- <h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p>
+ </style></head><body><main>
+ <h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p><div class="hero-tags"><span class="hero-tag">Pandas</span><span class="hero-tag">NumPy</span><span class="hero-tag">Safe rewrites</span><span class="hero-tag">Benchmarked</span></div><section class="quickstart"><div class="quickstart-card"><h2>Install from PyPI</h2><code>python -m pip install fastframe-pandas
+fastframe scan my_script.py</code></div><div class="quickstart-card"><h2>Run with Docker</h2><code>docker build -t fastframe:latest .
  <section class="summary">{_metric(len(findings), "patterns detected")}{_metric(f"{metrics.original.median_seconds:.4f}s", "original median")}{_metric(f"{metrics.rewritten.median_seconds:.4f}s", "rewritten median")}{_metric(speed, "speedup")}{_metric(memory, "peak memory change")}{_metric(verification_text, "result verification")}</section>
 {''.join(rows)}
 </main></body></html>'''

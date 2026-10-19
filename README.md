@@ -1,9 +1,15 @@
 # FastFrame
 
+[![PyPI](https://img.shields.io/pypi/v/fastframe-pandas?color=3776ab&logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/fastframe-pandas/)
+[![Python](https://img.shields.io/pypi/pyversions/fastframe-pandas?color=306998&logo=python&logoColor=white)](https://pypi.org/project/fastframe-pandas/)
 [![CI](https://github.com/anurag-23werty/FastFrame/actions/workflows/ci.yml/badge.svg)](https://github.com/anurag-23werty/FastFrame/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-94.34%25-brightgreen)](https://github.com/anurag-23werty/FastFrame/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-94.49%25-20c997?logo=pytest&logoColor=white)](https://github.com/anurag-23werty/FastFrame/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-f59e0b.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ed?logo=docker&logoColor=white)](Dockerfile)
 
-> FastFrame finds slow pandas/NumPy idioms, rewrites only safe patterns deterministically, and proves equivalence before reporting performance.
+> **FastFrame** finds slow pandas/NumPy idioms, rewrites only safe patterns deterministically, and proves equivalence before reporting performance.
+
+`pandas` · `NumPy` · `LibCST` · `CLI` · `safe refactoring` · `benchmarking`
 
 ## Problem
 
@@ -17,11 +23,11 @@ compares their results and stdout. Runtime has no LLM or network dependency.
 
 ### End users
 
-After FastFrame is published to PyPI, a user with Python 3.12 can install it
-without cloning this repository:
+Install the published PyPI package on Python 3.12 without cloning this
+repository:
 
 ```bash
-python -m pip install fastframe
+python -m pip install fastframe-pandas
 ```
 
 This installs the `fastframe` command. For example:
@@ -35,6 +41,38 @@ fastframe bench my_script.py my_script_fast.py --runs 5
 
 FastFrame executes supplied scripts during `fix` verification, `verify`, and
 `bench`; do not run it on untrusted scripts without a separate sandbox.
+
+### Docker image
+
+Build the image locally from the repository:
+
+```bash
+docker build -t fastframe:latest .
+```
+
+Run FastFrame against files in the current directory by mounting that directory
+into the container:
+
+```bash
+docker run --rm --network none \
+  -v "$PWD":/workspace -w /workspace \
+  fastframe:latest scan my_script.py
+```
+
+Run a rewrite and write the result into the mounted directory:
+
+```bash
+docker run --rm --network none \
+  -v "$PWD":/workspace -w /workspace \
+  fastframe:latest fix my_script.py -o my_script_fast.py
+```
+
+The image runs as the non-root `fastframe` user. The container can also run the
+offline project checks:
+
+```bash
+docker run --rm --network none --entrypoint make fastframe:latest test
+```
 
 ### Maintainers: publish with GitHub Actions
 
@@ -79,25 +117,6 @@ Real output from this repository:
 ```text
 Resolved 31 packages in 29ms
 Checked 30 packages in 13ms
-```
-
-### Docker
-
-```bash
-docker build -t fastframe:buildathon .
-```
-
-The image runs as non-root user `fastframe` and has `fastframe` as its
-entrypoint. Run a scan with:
-
-```bash
-docker run --rm --network none fastframe:buildathon scan examples/sales_analysis_slow.py
-```
-
-Run the complete offline test command by overriding the CLI entrypoint:
-
-```bash
-docker run --rm --network none --entrypoint make fastframe:buildathon test
 ```
 
 ## Terminal demo
@@ -213,16 +232,16 @@ uv run fastframe bench examples/sales_analysis_slow.py build/sales_fast.py --run
 uv run fastframe bench examples/sales_analysis_slow.py build/sales_fast.py --runs 1 --json
 ```
 
-Real output from one run on the 200k-row example:
+Real output from one local `--runs 1` report on the 200k-row example:
 
 ```text
 ┏━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
 ┃ Script    ┃ Median  ┃ Minimum ┃ Peak memory      ┃
 ┡━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ Original  │ 1.1700s │ 1.1700s │ 22,755,632 bytes │
-│ Rewritten │ 0.0633s │ 0.0633s │ 22,753,741 bytes │
+│ Original  │ 0.2960s │ 0.2960s │ 22,755,632 bytes │
+│ Rewritten │ 0.0238s │ 0.0238s │ 22,753,741 bytes │
 └───────────┴─────────┴─────────┴──────────────────┘
-Speedup: 18.50x
+Speedup: 12.45x
 Peak memory saved: +1,891 bytes (+0.01%)
 ```
 
@@ -315,15 +334,15 @@ whole-workload measurement, while each AP001–AP005 row uses its own focused
 100k-row script from `examples/patterns/`. The following values all came from
 one `--runs 1` report generation:
 
-| Benchmark | Workload | Speedup | Verification |
-|---|---|---:|:---:|
-| AP001 row-wise apply | `examples/patterns/ap001.py` | 147.32× | PASS |
-| AP002 Series apply | `examples/patterns/ap002.py` | 12.01× | PASS |
-| AP003 iterrows append | `examples/patterns/ap003.py` | 436.25× | PASS |
-| AP004 concat growth | `examples/patterns/ap004.py` | 6.23× | PASS |
-| AP005 `np.append` growth | `examples/patterns/ap005.py` | 5.88× | PASS |
-| AP006 downcast advisory | no rewrite | advisory only | manual review |
-| Whole sales workload | `examples/sales_analysis_slow.py` (200k rows) | 18.50× | PASS |
+| Benchmark | Workload | Timing, original → rewritten | Speedup | Peak-memory delta | Verification |
+|---|---|---:|---:|---:|:---:|
+| AP001 row-wise apply | `examples/patterns/ap001.py` | 0.3016s → 0.0016s | 182.80× | +17,050,886 bytes (+84.0%) | PASS |
+| AP002 Series apply | `examples/patterns/ap002.py` | 0.0152s → 0.0012s | 13.11× | +5,000,585 bytes (+75.1%) | PASS |
+| AP003 iterrows append | `examples/patterns/ap003.py` | 0.8203s → 0.0025s | 332.70× | +1,599,540 bytes (+32.9%) | PASS |
+| AP004 concat growth | `examples/patterns/ap004.py` | 0.6091s → 0.0813s | 7.50× | −1,116,241 bytes (−3.6%) | PASS |
+| AP005 `np.append` growth | `examples/patterns/ap005.py` | 0.0824s → 0.0118s | 7.00× | −4,812,636 bytes (−919.3%) | PASS |
+| AP006 downcast advisory | no rewrite | advisory only | advisory only | advisory only | manual review |
+| Whole sales workload | `examples/sales_analysis_slow.py` (200k rows) | 0.2960s → 0.0238s | 12.45× | +1,891 bytes (+0.01%) | PASS |
 
 Benchmarks include subprocess execution and are machine/load dependent. The
 focused scripts are sized to make the slow form measurable; AP004 uses 2,000
@@ -376,8 +395,8 @@ uv run --no-sync mypy
 Real local result:
 
 ```text
-90 passed
-Required test coverage of 90% reached. Total coverage: 94.39%
+93 passed
+Required test coverage of 90% reached. Total coverage: 94.49%
 ```
 
 GitHub Actions runs Ruff, mypy, coverage tests, Docker build, and the offline
