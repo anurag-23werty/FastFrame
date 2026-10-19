@@ -323,6 +323,10 @@ class DowncastRule(Rule):
 RULES: Sequence[Rule] = (RowApplyRule(), ApplyRule(), IterrowsRule(), ConcatRule(), NpAppendRule(), DowncastRule())
 
 
+def rule_by_id(pattern: str) -> Optional[Rule]:
+    return next((rule for rule in RULES if rule.id == pattern.upper()), None)
+
+
 class _Detector(cst.CSTVisitor):
     METADATA_DEPENDENCIES = (PositionProvider,)
 
