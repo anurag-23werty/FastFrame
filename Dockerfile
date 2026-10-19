@@ -12,4 +12,12 @@ RUN uv sync --locked --extra test --no-dev --no-install-project
 
 COPY . .
 RUN uv sync --locked --extra test --no-dev
-CMD ["uv", "run", "--no-sync", "python", "-c", "import fastframe; print('FastFrame core ready')"]
+
+RUN useradd --create-home --uid 10001 fastframe \
+    && chown -R fastframe:fastframe /app
+ENV PATH="/app/.venv/bin:$PATH" \
+    UV_OFFLINE=1 \
+    UV_PYTHON_DOWNLOADS=never
+USER fastframe
+ENTRYPOINT ["fastframe"]
+CMD ["--help"]
