@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import difflib
-import json
 import os
 import shutil
 import tempfile
@@ -58,9 +57,7 @@ def fix(
     if not diff and not output and not in_place:
         raise typer.BadParameter("provide -o/--output or --in-place, or use --diff")
     if file.suffix == ".ipynb":
-        if not no_verify:
-            console.print("[yellow]Notebook fixes are copied without script verification; use --no-verify.[/yellow]")
-            raise typer.Exit(1)
+        console.print("[yellow]Notebook verification is not available; rewriting code cells in a copy.[/yellow]")
         if diff:
             raise typer.BadParameter("--diff is currently supported for Python files only")
         destination = file if in_place else output

@@ -37,6 +37,10 @@ def test_notebook_code_cells_scan_and_copy_fix(tmp_path):
     notebook = json.loads(destination.read_text())
     assert "apply" not in "".join(notebook["cells"][1]["source"])
     assert notebook["cells"][0]["source"] == ["# title"]
+    cli_destination = tmp_path / "cli-fixed.ipynb"
+    result = runner.invoke(app, ["fix", str(source), "-o", str(cli_destination)])
+    assert result.exit_code == 0
+    assert cli_destination.exists()
 
 
 def test_inline_suppression_and_pyproject_config(tmp_path):
