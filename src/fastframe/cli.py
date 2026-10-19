@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import difflib
 import os
+import re
 import shutil
 import tempfile
 from pathlib import Path
@@ -28,7 +29,10 @@ def scan(file: Path, format: str = typer.Option("text", "--format")) -> None:
     """Recursively scan Python files and code cells in Jupyter notebooks."""
     if format not in {"text", "json"}:
         raise typer.BadParameter("format must be text or json")
-    findings = scan_path(file)
+    warnings: list[str] = []
+    findings = scan_path(file, warnings=warnings)
+    for warning in warnings:
+        console.print(f"[yellow]{warning}[/yellow]")
     if format == "json":
         console.print_json(data=[item.as_dict() for item in findings])
     else:
@@ -48,6 +52,7 @@ def fix(
     diff: bool = typer.Option(False, "--diff", help="Print the diff without writing a file."),
     in_place: bool = typer.Option(False, "--in-place", help="Rewrite the input and keep a .bak copy."),
     no_verify: bool = typer.Option(False, "--no-verify", help="Skip equivalence verification (unsafe)."),
+    verbose: bool = typer.Option(False, "--verbose", help="Show the full verification traceback."),
 ) -> None:
     """Write a deterministic rewrite, verifying it unless explicitly skipped."""
     if diff and (output or in_place):
@@ -84,7 +89,14 @@ def fix(
         if not result.passed:
             console.print("[red]Verification failed; no output was written.[/red]")
             if result.error:
-                console.print(result.error)
+                if verbose:
+                    console.print(result.error)
+                else:
+                    match = re.search(r'File ".*?", line (\d+).*?\n.*?\n([A-Za-z_][\w.]*Error): (.*)', result.error, re.S)
+                    if match:
+                        console.print(f"{match.group(2)} at line {match.group(1)}: {match.group(3)}")
+                    else:
+                        console.print("VerificationError at line unknown: " + result.error.splitlines()[-1])
             raise typer.Exit(1)
         console.print("[green]Verification passed.[/green]")
     if diff:

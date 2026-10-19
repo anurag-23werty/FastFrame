@@ -16,6 +16,7 @@ _SUPPRESSION = re.compile(r"#\s*fastframe:\s*ignore(?:\[([^\]]+)\])?", re.IGNORE
 class ScanConfig:
     select: frozenset[str] = frozenset()
     ignore: frozenset[str] = frozenset()
+    exclude: frozenset[str] = frozenset()
 
 
 def load_config(path: Path) -> ScanConfig:
@@ -30,6 +31,7 @@ def load_config(path: Path) -> ScanConfig:
         return ScanConfig(
             frozenset(str(item).upper() for item in settings.get("select", [])),
             frozenset(str(item).upper() for item in settings.get("ignore", [])),
+            frozenset(str(item) for item in settings.get("exclude", [])),
         )
     return ScanConfig()
 
