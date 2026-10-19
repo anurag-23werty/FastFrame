@@ -169,8 +169,9 @@ def _page(
 .meta{{color:#5f6368;font-size:13px}} pre{{background:#202124;color:#f8f9fa;padding:12px;border-radius:6px;overflow:auto;min-height:42px}} code{{font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}}
 table.diff{{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block}} .diff_header{{background:#e8eaed}} td{{padding:2px 5px;white-space:pre-wrap;vertical-align:top}} .diff_add{{background:#ceead6}} .diff_sub{{background:#f7caca}} .diff_chg{{background:#fce8b2}}
  </style></head><body><main>
- <h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p><div class="hero-tags"><span class="hero-tag">Pandas</span><span class="hero-tag">NumPy</span><span class="hero-tag">Safe rewrites</span><span class="hero-tag">Benchmarked</span></div><section class="quickstart"><div class="quickstart-card"><h2>Install from PyPI</h2><code>python -m pip install fastframe-pandas
-fastframe scan my_script.py</code></div><div class="quickstart-card"><h2>Run with Docker</h2><code>docker build -t fastframe:latest .
+ <h1>FastFrame anti-pattern report</h1><p class="subtitle">{html.escape(source_path.name)} · deterministic rewrite and subprocess verification</p><div class="hero-tags"><span class="hero-tag">Pandas</span><span class="hero-tag">NumPy</span><span class="hero-tag">Safe rewrites</span><span class="hero-tag">Benchmarked</span></div><section class="quickstart"><div class="quickstart-card"><h2>🐼 Install from PyPI</h2><code>python -m pip install fastframe-pandas pandas numpy
+ fastframe scan my_script.py</code></div><div class="quickstart-card"><h2>🐳 Run with Docker</h2><code>docker build -t fastframe:latest .
+ docker run --rm --network none -v "$PWD":/workspace -w /workspace fastframe:latest scan my_script.py</code></div></section>
  <section class="summary">{_metric(len(findings), "patterns detected")}{_metric(f"{metrics.original.median_seconds:.4f}s", "original median")}{_metric(f"{metrics.rewritten.median_seconds:.4f}s", "rewritten median")}{_metric(speed, "speedup")}{_metric(memory, "peak memory change")}{_metric(verification_text, "result verification")}</section>
 {''.join(rows)}
 </main></body></html>'''

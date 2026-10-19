@@ -12,6 +12,8 @@ RUN uv sync --locked --extra test --no-dev --no-install-project
 
 COPY . .
 RUN uv sync --locked --extra test --no-dev
+COPY scripts/docker-entrypoint.sh /usr/local/bin/fastframe-docker-entrypoint
+RUN chmod 0555 /usr/local/bin/fastframe-docker-entrypoint
 
 RUN useradd --create-home --uid 10001 fastframe \
     && chown -R fastframe:fastframe /app
@@ -19,5 +21,5 @@ ENV PATH="/app/.venv/bin:$PATH" \
     UV_OFFLINE=1 \
     UV_PYTHON_DOWNLOADS=never
 USER fastframe
-ENTRYPOINT ["fastframe"]
+ENTRYPOINT ["fastframe-docker-entrypoint"]
 CMD ["--help"]

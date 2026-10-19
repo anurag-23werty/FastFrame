@@ -39,6 +39,13 @@ fastframe verify my_script.py my_script_fast.py
 fastframe bench my_script.py my_script_fast.py --runs 5
 ```
 
+For a colorful terminal introduction with the supported data stack and Docker
+whale banner:
+
+```bash
+fastframe demo
+```
+
 FastFrame executes supplied scripts during `fix` verification, `verify`, and
 `bench`; do not run it on untrusted scripts without a separate sandbox.
 
@@ -72,6 +79,15 @@ offline project checks:
 
 ```bash
 docker run --rm --network none --entrypoint make fastframe:latest test
+```
+
+Docker commands show a small whale-and-water startup banner. Set
+`FASTFRAME_QUIET=1` to disable it in CI or scripts:
+
+```bash
+docker run --rm --network none -e FASTFRAME_QUIET=1 \
+  -v "$PWD":/workspace -w /workspace \
+  fastframe:latest scan my_script.py
 ```
 
 ### Maintainers: publish with GitHub Actions

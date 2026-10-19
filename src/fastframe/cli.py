@@ -25,6 +25,27 @@ console = Console()
 
 
 @app.command()
+def demo() -> None:
+    """Show the FastFrame, pandas, NumPy, and Docker-friendly terminal banner."""
+    console.print("[bold bright_blue]╭────────────────────────────────────────────╮[/bold bright_blue]")
+    console.print("[bold bright_blue]│[/bold bright_blue] [bold white]FASTFRAME[/bold white] · safe dataframe optimization [bold bright_blue]│[/bold bright_blue]")
+    console.print("[bold bright_blue]╰────────────────────────────────────────────╯[/bold bright_blue]")
+    console.print("  [bright_yellow]🐼 pandas[/bright_yellow]   [bright_green]▦ NumPy[/bright_green]   [bright_magenta]✦ LibCST[/bright_magenta]")
+    console.print("  [cyan]Detect[/cyan] → [yellow]Rewrite[/yellow] → [green]Verify[/green] → [magenta]Benchmark[/magenta]")
+    console.print()
+    console.print("[bold cyan]Install:[/bold cyan] python -m pip install fastframe-pandas pandas numpy")
+    console.print("[bold cyan]Try:[/bold cyan]     fastframe scan my_script.py")
+    console.print()
+    console.print("[bold blue]      .-~~~-.[/bold blue]")
+    console.print("[bold blue]  .- ~ ~-(       )_ _[/bold blue]")
+    console.print("[bold blue] /                 ~ -.[/bold blue]")
+    console.print("[bold blue]|       DOCKER          |[/bold blue]")
+    console.print("[bold blue] \\                 .-~~-.[/bold blue]")
+    console.print("[bold blue]   ~- ._ _ _.-~       ~-.[/bold blue]")
+    console.print("[bold white]Container-ready. Safe defaults enabled.[/bold white]")
+
+
+@app.command()
 def scan(file: Path, format: str = typer.Option("text", "--format")) -> None:
     """Recursively scan Python files and code cells in Jupyter notebooks."""
     if format not in {"text", "json"}:

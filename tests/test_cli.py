@@ -12,6 +12,14 @@ def _script(path, body):
     return path
 
 
+def test_demo_shows_install_and_container_banner():
+    result = runner.invoke(app, ["demo"])
+    assert result.exit_code == 0
+    assert "FASTFRAME" in result.stdout
+    assert "pip install fastframe-pandas pandas numpy" in result.stdout
+    assert "DOCKER" in result.stdout
+
+
 def test_verify_has_readable_and_json_modes(tmp_path):
     left = _script(tmp_path / "left.py", "print('same')\nresult = [1, 2]\n")
     right = _script(tmp_path / "right.py", "print('same')\nresult = [1, 2]\n")
