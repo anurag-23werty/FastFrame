@@ -349,8 +349,21 @@ def detect(source: str) -> List[Finding]:
 
 
 class _Rewriter(cst.CSTTransformer):
+    def __init__(self, pattern: Optional[str] = None, occurrence: Optional[int] = None) -> None:
+        self.pattern = pattern
+        self.occurrence = occurrence
+        self._matched = 0
+
     def _rewrite(self, node: cst.CSTNode) -> Optional[cst.CSTNode]:
         for rule in RULES:
+            if self.pattern is not None and rule.id != self.pattern:
+                continue
+            if not rule.match(node):
+                continue
+            if self.occurrence is not None:
+                self._matched += 1
+                if self._matched != self.occurrence:
+                    continue
             replacement = rule.rewrite(node)
             if replacement is not None:
                 return replacement
@@ -363,8 +376,11 @@ class _Rewriter(cst.CSTTransformer):
         return self._rewrite(original) or updated  # type: ignore[return-value]
 
 
-def rewrite(source: str) -> str:
-    return cst.parse_module(source).visit(_Rewriter()).code
+def rewrite(source: str, pattern: Optional[str] = None, occurrence: Optional[int] = None) -> str:
+    """Rewrite all rules, or one rule occurrence when requested."""
+    if occurrence is not None and occurrence < 1:
+        raise ValueError("occurrence must be at least 1")
+    return cst.parse_module(source).visit(_Rewriter(pattern, occurrence)).code
 
 
 rewrite_source = rewrite

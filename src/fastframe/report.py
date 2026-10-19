@@ -6,12 +6,22 @@ import argparse
 import difflib
 import html
 import tempfile
+from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .antipatterns import Finding, detect, rewrite
 from .bench import BenchmarkResult, benchmark
 from .verify import VerificationResult, verify_scripts
+
+
+@dataclass
+class PatternResult:
+    finding: Finding
+    before: str
+    after: str
+    verification: Optional[VerificationResult]
+    metrics: Optional[BenchmarkResult]
 
 
 def _badge(label: str, ok: bool) -> str:
@@ -41,21 +51,55 @@ def _metric(value: object, label: str) -> str:
     return f'<div class="metric"><strong>{html.escape(str(value))}</strong><span>{html.escape(label)}</span></div>'
 
 
-def _pattern_metrics(finding: Finding, verification: VerificationResult, metrics: BenchmarkResult) -> str:
+def _pattern_metrics(result: PatternResult) -> str:
+    finding = result.finding
     if finding.manual_fix:
         badge = _badge("PASS · manual review", True)
-        result = "No code rewrite; advisory finding only"
+        verification_text = "No code rewrite; advisory finding only"
     else:
-        passed = verification.passed
+        assert result.verification is not None and result.metrics is not None
+        passed = result.verification.passed
         badge = _badge("PASS" if passed else "FAIL", passed)
-        result = "Equivalent outputs" if passed else (verification.error or "result mismatch")
+        verification_text = "Equivalent outputs" if passed else (result.verification.error or "result mismatch")
+    metrics = result.metrics
+    if metrics is None:
+        return f'''<div class="pattern-metrics">
+      <div><strong>Verify</strong><span>{html.escape(verification_text)}</span></div>
+      <div><strong>Speedup</strong><span>advisory only</span></div>
+      <div><strong>Memory</strong><span>advisory only</span></div>
+      <div class="status">{badge}</div>
+    </div>'''
     return f'''<div class="pattern-metrics">
-      <div><strong>Verify</strong><span>{html.escape(result)}</span></div>
+      <div><strong>Verify</strong><span>{html.escape(verification_text)}</span></div>
       <div><strong>Speedup</strong><span>{metrics.speedup:.2f}×</span></div>
       <div><strong>Memory</strong><span>{metrics.memory_savings_bytes:+,} bytes ({metrics.memory_savings_percent:+.1f}%)</span></div>
       <div><strong>Timing</strong><span>{metrics.original.median_seconds:.4f}s → {metrics.rewritten.median_seconds:.4f}s</span></div>
       <div class="status">{badge}</div>
     </div>'''
+
+
+def _pattern_results(source_path: Path, source: str, findings: List[Finding], temp: Path, runs: int) -> List[PatternResult]:
+    counts: Dict[str, int] = {}
+    results: List[PatternResult] = []
+    for finding in findings:
+        before = _snippet(source, finding)
+        if finding.manual_fix:
+            results.append(PatternResult(finding, before, before, None, None))
+            continue
+        counts[finding.pattern] = counts.get(finding.pattern, 0) + 1
+        rewritten = rewrite(source, pattern=finding.pattern, occurrence=counts[finding.pattern])
+        candidate = temp / f"{source_path.stem}-{finding.pattern.lower()}-{counts[finding.pattern]}{source_path.suffix}"
+        candidate.write_text(rewritten, encoding="utf-8")
+        results.append(
+            PatternResult(
+                finding,
+                before,
+                _snippet(rewritten, finding),
+                verify_scripts(source_path, candidate),
+                benchmark(source_path, candidate, runs=runs),
+            )
+        )
+    return results
 
 
 def render_report(source_path: str | Path, output_path: str | Path, *, runs: int = 3) -> Path:
@@ -68,35 +112,36 @@ def render_report(source_path: str | Path, output_path: str | Path, *, runs: int
         rewritten_path.write_text(rewritten, encoding="utf-8")
         verification = verify_scripts(source_path, rewritten_path)
         metrics = benchmark(source_path, rewritten_path, runs=runs)
+        patterns = _pattern_results(source_path, source, findings, Path(temp), runs)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(_page(source_path, source, rewritten, findings, verification, metrics), encoding="utf-8")
+        output_path.write_text(_page(source_path, source, findings, patterns, verification, metrics), encoding="utf-8")
     return output_path
 
 
 def _page(
     source_path: Path,
     source: str,
-    rewritten: str,
     findings: List[Finding],
+    patterns: List[PatternResult],
     verification: VerificationResult,
     metrics: BenchmarkResult,
 ) -> str:
     speed = f"{metrics.speedup:.2f}×"
     memory = f"{metrics.memory_savings_bytes:+,} bytes ({metrics.memory_savings_percent:+.1f}%)"
     rows = []
-    for finding in findings:
+    for pattern in patterns:
+        finding = pattern.finding
         manual = finding.manual_fix
-        status = "MANUAL REVIEW" if manual else ("PASS" if verification.passed else "FAIL")
-        ok = manual or verification.passed
-        before = _snippet(source, finding)
-        after = _snippet(rewritten, finding)
+        pattern_verification = pattern.verification
+        status = "MANUAL REVIEW" if manual else ("PASS" if pattern_verification and pattern_verification.passed else "FAIL")
+        ok = manual or bool(pattern_verification and pattern_verification.passed)
         rows.append(
             f'''<article class="pattern">
               <div class="pattern-head"><h2>{html.escape(finding.pattern)} · {html.escape(finding.message)}</h2>{_badge(status, ok)}</div>
               <p class="meta">Line {finding.line}, column {finding.column} · Estimated saving: {finding.estimate_bytes if finding.estimate_bytes is not None else "n/a"} bytes/value</p>
-              {_pattern_metrics(finding, verification, metrics)}
-              <div class="code-grid"><section><h3>Before</h3>{_code_block(before)}</section><section><h3>After</h3>{_code_block(after)}</section></div>
-              <h3>Diff</h3>{_diff(before, after)}
+              {_pattern_metrics(pattern)}
+              <div class="code-grid"><section><h3>Before</h3>{_code_block(pattern.before)}</section><section><h3>After</h3>{_code_block(pattern.after)}</section></div>
+              <h3>Diff</h3>{_diff(pattern.before, pattern.after)}
             </article>'''
         )
     if not rows:
