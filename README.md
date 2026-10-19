@@ -166,10 +166,10 @@ Real output from one run on the 200k-row example:
 ┏━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
 ┃ Script    ┃ Median  ┃ Minimum ┃ Peak memory      ┃
 ┡━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ Original  │ 0.2990s │ 0.2990s │ 22,755,587 bytes │
-│ Rewritten │ 0.0226s │ 0.0226s │ 22,753,696 bytes │
+│ Original  │ 1.1700s │ 1.1700s │ 22,755,632 bytes │
+│ Rewritten │ 0.0633s │ 0.0633s │ 22,753,741 bytes │
 └───────────┴─────────┴─────────┴──────────────────┘
-Speedup: 13.22x
+Speedup: 18.50x
 Peak memory saved: +1,891 bytes (+0.01%)
 ```
 
@@ -264,17 +264,17 @@ one `--runs 1` report generation:
 
 | Benchmark | Workload | Speedup | Verification |
 |---|---|---:|:---:|
-| AP001 row-wise apply | `examples/patterns/ap001.py` | 158.71× | PASS |
-| AP002 Series apply | `examples/patterns/ap002.py` | 13.77× | PASS |
-| AP003 iterrows append | `examples/patterns/ap003.py` | 382.52× | PASS |
-| AP004 concat growth | `examples/patterns/ap004.py` | 1.48× | PASS |
-| AP005 `np.append` growth | `examples/patterns/ap005.py` | 6.74× | PASS |
+| AP001 row-wise apply | `examples/patterns/ap001.py` | 147.32× | PASS |
+| AP002 Series apply | `examples/patterns/ap002.py` | 12.01× | PASS |
+| AP003 iterrows append | `examples/patterns/ap003.py` | 436.25× | PASS |
+| AP004 concat growth | `examples/patterns/ap004.py` | 6.23× | PASS |
+| AP005 `np.append` growth | `examples/patterns/ap005.py` | 5.88× | PASS |
 | AP006 downcast advisory | no rewrite | advisory only | manual review |
-| Whole sales workload | `examples/sales_analysis_slow.py` (200k rows) | 13.65× | PASS |
+| Whole sales workload | `examples/sales_analysis_slow.py` (200k rows) | 18.50× | PASS |
 
 Benchmarks include subprocess execution and are machine/load dependent. The
-focused scripts are sized to make the slow form measurable; AP004 uses about
-500 chunks and AP005 uses 20,000 appends. The HTML report contains the complete
+focused scripts are sized to make the slow form measurable; AP004 uses 2,000
+prebuilt 500-row chunks and AP005 uses 20,000 appends. The HTML report contains the complete
 per-pattern timing, memory, code, diff, and badge details.
 
 ## Safety guarantees
@@ -307,6 +307,10 @@ per-pattern timing, memory, code, diff, and badge details.
   function microbenchmark.
 - Unknown source shapes are reported only when recognized; no speculative
   rewrite is attempted.
+- Rewrites are syntax-based rather than type-aware: a method that looks like
+  pandas `apply` on a non-pandas object can be rewritten. The default `fix`
+  verification step executes both versions and catches mismatched behavior
+  before writing the output.
 
 ## Tests and quality
 
