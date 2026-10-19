@@ -13,15 +13,16 @@ main{max-width:1180px;margin:0 auto;padding:32px 22px} h1{margin:0 0 4px} h2{fon
 table.diff{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block} .diff_header{background:#e8eaed} td{padding:2px 5px;white-space:pre-wrap;vertical-align:top} .diff_add{background:#ceead6} .diff_sub{background:#f7caca} .diff_chg{background:#fce8b2}
 </style></head><body><main>
  <h1>FastFrame anti-pattern report</h1><p class="subtitle">sales_analysis_slow.py · deterministic rewrite and subprocess verification</p>
- <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>0.5535s</strong><span>original median</span></div><div class="metric"><strong>0.5481s</strong><span>rewritten median</span></div><div class="metric"><strong>1.01×</strong><span>speedup</span></div><div class="metric"><strong>-115 bytes (-0.0%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
+ <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>2.5958s</strong><span>original median</span></div><div class="metric"><strong>0.0275s</strong><span>rewritten median</span></div><div class="metric"><strong>94.54×</strong><span>speedup</span></div><div class="metric"><strong>+25,172,628 bytes (+41.4%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
 <article class="pattern">
               <div class="pattern-head"><h2>AP001 · row-wise DataFrame.apply arithmetic</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 13, column 13 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 17, column 13 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>1.22×</span></div>
+      <div><strong>Memory</strong><span>+13,056,554 bytes (+21.5%)</span></div>
+      <div><strong>Timing median</strong><span>2.5800s → 2.1062s</span></div>
+      <div><strong>Timing min</strong><span>2.5800s → 2.1062s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>)
@@ -32,7 +33,7 @@ scaled_units = df[&quot;units&quot;].apply(lambda value: value * 2)
 </code></pre></section><section><h3>After</h3><pre><code>)
 
 row_totals = df[&quot;units&quot;] * df[&quot;price&quot;]
-scaled_units = df[&quot;units&quot;] * 2
+scaled_units = df[&quot;units&quot;].apply(lambda value: value * 2)
 
 </code></pre></section></div>
               <h3>Diff</h3>
@@ -45,18 +46,19 @@ scaled_units = df[&quot;units&quot;] * 2
             <tr><td class="diff_next" id="difflib_chg_to0__0"><a href="#difflib_chg_to0__0">f</a></td><td class="diff_header" id="from0_1">1</td><td nowrap="nowrap">)</td><td class="diff_next"><a href="#difflib_chg_to0__0">f</a></td><td class="diff_header" id="to0_1">1</td><td nowrap="nowrap">)</td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from0_2">2</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to0_2">2</td><td nowrap="nowrap"></td></tr>
             <tr><td class="diff_next"><a href="#difflib_chg_to0__top">t</a></td><td class="diff_header" id="from0_3">3</td><td nowrap="nowrap"><span class="diff_sub">row_totals&nbsp;=&nbsp;df.apply(lambda&nbsp;row:&nbsp;row["units"]&nbsp;*&nbsp;row["price"],&nbsp;axis=1)</span></td><td class="diff_next"><a href="#difflib_chg_to0__top">t</a></td><td class="diff_header" id="to0_3">3</td><td nowrap="nowrap"><span class="diff_add">row_totals&nbsp;=&nbsp;df["units"]&nbsp;*&nbsp;df["price"]</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from0_4">4</td><td nowrap="nowrap"><span class="diff_sub">scaled_units&nbsp;=&nbsp;df["units"].apply(lambda&nbsp;value:&nbsp;value&nbsp;*&nbsp;2)</span></td><td class="diff_next"></td><td class="diff_header" id="to0_4">4</td><td nowrap="nowrap"><span class="diff_add">scaled_units&nbsp;=&nbsp;df["units"]&nbsp;*&nbsp;2</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from0_4">4</td><td nowrap="nowrap">scaled_units&nbsp;=&nbsp;df["units"].apply(lambda&nbsp;value:&nbsp;value&nbsp;*&nbsp;2)</td><td class="diff_next"></td><td class="diff_header" id="to0_4">4</td><td nowrap="nowrap">scaled_units&nbsp;=&nbsp;df["units"].apply(lambda&nbsp;value:&nbsp;value&nbsp;*&nbsp;2)</td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from0_5">5</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to0_5">5</td><td nowrap="nowrap"></td></tr>
         </tbody>
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP002 · Series.apply arithmetic lambda</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 14, column 15 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 18, column 15 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>1.09×</span></div>
+      <div><strong>Memory</strong><span>+678 bytes (+0.0%)</span></div>
+      <div><strong>Timing median</strong><span>2.8167s → 2.5849s</span></div>
+      <div><strong>Timing min</strong><span>2.8167s → 2.5849s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -65,7 +67,7 @@ scaled_units = df[&quot;units&quot;].apply(lambda value: value * 2)
 
 values = []
 </code></pre></section><section><h3>After</h3><pre><code>
-row_totals = df[&quot;units&quot;] * df[&quot;price&quot;]
+row_totals = df.apply(lambda row: row[&quot;units&quot;] * row[&quot;price&quot;], axis=1)
 scaled_units = df[&quot;units&quot;] * 2
 
 values = []
@@ -78,20 +80,21 @@ values = []
         <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">Before</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">After</th></tr></thead>
         <tbody>
             <tr><td class="diff_next" id="difflib_chg_to1__0"><a href="#difflib_chg_to1__0">f</a></td><td class="diff_header" id="from1_1">1</td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to1__0">f</a></td><td class="diff_header" id="to1_1">1</td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to1__top">t</a></td><td class="diff_header" id="from1_2">2</td><td nowrap="nowrap"><span class="diff_sub">row_totals&nbsp;=&nbsp;df.apply(lambda&nbsp;row:&nbsp;row["units"]&nbsp;*&nbsp;row["price"],&nbsp;axis=1)</span></td><td class="diff_next"><a href="#difflib_chg_to1__top">t</a></td><td class="diff_header" id="to1_2">2</td><td nowrap="nowrap"><span class="diff_add">row_totals&nbsp;=&nbsp;df["units"]&nbsp;*&nbsp;df["price"]</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from1_3">3</td><td nowrap="nowrap"><span class="diff_sub">scaled_units&nbsp;=&nbsp;df["units"].apply(lambda&nbsp;value:&nbsp;value&nbsp;*&nbsp;2)</span></td><td class="diff_next"></td><td class="diff_header" id="to1_3">3</td><td nowrap="nowrap"><span class="diff_add">scaled_units&nbsp;=&nbsp;df["units"]&nbsp;*&nbsp;2</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from1_2">2</td><td nowrap="nowrap">row_totals&nbsp;=&nbsp;df.apply(lambda&nbsp;row:&nbsp;row["units"]&nbsp;*&nbsp;row["price"],&nbsp;axis=1)</td><td class="diff_next"></td><td class="diff_header" id="to1_2">2</td><td nowrap="nowrap">row_totals&nbsp;=&nbsp;df.apply(lambda&nbsp;row:&nbsp;row["units"]&nbsp;*&nbsp;row["price"],&nbsp;axis=1)</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to1__top">t</a></td><td class="diff_header" id="from1_3">3</td><td nowrap="nowrap"><span class="diff_sub">scaled_units&nbsp;=&nbsp;df["units"].apply(lambda&nbsp;value:&nbsp;value&nbsp;*&nbsp;2)</span></td><td class="diff_next"><a href="#difflib_chg_to1__top">t</a></td><td class="diff_header" id="to1_3">3</td><td nowrap="nowrap"><span class="diff_add">scaled_units&nbsp;=&nbsp;df["units"]&nbsp;*&nbsp;2</span></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from1_4">4</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to1_4">4</td><td nowrap="nowrap"></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from1_5">5</td><td nowrap="nowrap">values&nbsp;=&nbsp;[]</td><td class="diff_next"></td><td class="diff_header" id="to1_5">5</td><td nowrap="nowrap">values&nbsp;=&nbsp;[]</td></tr>
         </tbody>
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP003 · iterrows arithmetic append-to-list</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 17, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 21, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>4.80×</span></div>
+      <div><strong>Memory</strong><span>+90 bytes (+0.0%)</span></div>
+      <div><strong>Timing median</strong><span>2.5994s → 0.5412s</span></div>
+      <div><strong>Timing min</strong><span>2.5994s → 0.5412s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -122,24 +125,25 @@ combined = df.iloc[:0]
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP004 · growing DataFrame with concat/append in a loop</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 21, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 25, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>0.99×</span></div>
+      <div><strong>Memory</strong><span>-122 bytes (-0.0%)</span></div>
+      <div><strong>Timing median</strong><span>2.6063s → 2.6296s</span></div>
+      <div><strong>Timing min</strong><span>2.6063s → 2.6296s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
 combined = df.iloc[:0]
-for chunk in [df.iloc[:2], df.iloc[2:]]:
+for chunk in np.array_split(df, 20):
     combined = pd.concat([combined, chunk], ignore_index=True)
 
-</code></pre></section><section><h3>After</h3><pre><code>combined = df.iloc[:0]
+</code></pre></section><section><h3>After</h3><pre><code>
+combined = df.iloc[:0]
 _fastframe_combined_parts = [combined]
-for chunk in [df.iloc[:2], df.iloc[2:]]:
+for chunk in np.array_split(df, 20):
     _fastframe_combined_parts.append(chunk)
-combined = pd.concat(_fastframe_combined_parts, ignore_index=True)
 </code></pre></section></div>
               <h3>Diff</h3>
     <table class="diff" id="difflib_chg_to3__top"
@@ -148,35 +152,35 @@ combined = pd.concat(_fastframe_combined_parts, ignore_index=True)
         <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
         <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">Before</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">After</th></tr></thead>
         <tbody>
-            <tr><td class="diff_next" id="difflib_chg_to3__1"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header" id="from3_1">1</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next" id="difflib_chg_to3__2"></td><td class="diff_header" id="from3_2">2</td><td nowrap="nowrap">combined&nbsp;=&nbsp;df.iloc[:0]</td><td class="diff_next"></td><td class="diff_header" id="to3_1">1</td><td nowrap="nowrap">combined&nbsp;=&nbsp;df.iloc[:0]</td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to3__2">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to3__2">n</a></td><td class="diff_header" id="to3_2">2</td><td nowrap="nowrap"><span class="diff_add">_fastframe_combined_parts&nbsp;=&nbsp;[combined]</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from3_3">3</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;[df.iloc[:2],&nbsp;df.iloc[2:]]:</td><td class="diff_next"></td><td class="diff_header" id="to3_3">3</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;[df.iloc[:2],&nbsp;df.iloc[2:]]:</td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to3__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to3__top">t</a></td><td class="diff_header" id="to3_4">4</td><td nowrap="nowrap"><span class="diff_add">&nbsp;&nbsp;&nbsp;&nbsp;_fastframe_combined_parts.append(chunk)</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from3_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;</span>combined&nbsp;=&nbsp;pd.concat(<span class="diff_chg">[</span>combined,<span class="diff_sub">&nbsp;chunk],</span>&nbsp;ignore_index=True)</td><td class="diff_next"></td><td class="diff_header" id="to3_5">5</td><td nowrap="nowrap">combined&nbsp;=&nbsp;pd.concat(<span class="diff_chg">_fastframe_</span>combined<span class="diff_add">_parts</span>,&nbsp;ignore_index=True)</td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to3__0"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="from3_1">1</td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to3__0">f</a></td><td class="diff_header" id="to3_1">1</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to3__1"></td><td class="diff_header" id="from3_2">2</td><td nowrap="nowrap">combined&nbsp;=&nbsp;df.iloc[:0]</td><td class="diff_next"></td><td class="diff_header" id="to3_2">2</td><td nowrap="nowrap">combined&nbsp;=&nbsp;df.iloc[:0]</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to3__1">n</a></td><td class="diff_header" id="to3_3">3</td><td nowrap="nowrap"><span class="diff_add">_fastframe_combined_parts&nbsp;=&nbsp;[combined]</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from3_3">3</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;np.array_split(df,&nbsp;20):</td><td class="diff_next"></td><td class="diff_header" id="to3_4">4</td><td nowrap="nowrap">for&nbsp;chunk&nbsp;in&nbsp;np.array_split(df,&nbsp;20):</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to3__top">t</a></td><td class="diff_header" id="from3_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;combined&nbsp;=&nbsp;pd.concat([combined,&nbsp;chunk],&nbsp;ignore_index=True)</span></td><td class="diff_next"><a href="#difflib_chg_to3__top">t</a></td><td class="diff_header" id="to3_5">5</td><td nowrap="nowrap"><span class="diff_add">&nbsp;&nbsp;&nbsp;&nbsp;_fastframe_combined_parts.append(chunk)</span></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from3_5">5</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
         </tbody>
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP005 · growing NumPy array with np.append in a loop</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 25, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 29, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>0.99×</span></div>
+      <div><strong>Memory</strong><span>-138 bytes (-0.0%)</span></div>
+      <div><strong>Timing median</strong><span>2.6041s → 2.6227s</span></div>
+      <div><strong>Timing min</strong><span>2.6041s → 2.6227s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
 amounts = np.array([], dtype=float)
-for value in [10.0, 20.0, 30.0, 40.0]:
+for value in df[&quot;price&quot;].to_numpy()[:2_000]:
     amounts = np.append(amounts, value)
 
-</code></pre></section><section><h3>After</h3><pre><code>combined = pd.concat(_fastframe_combined_parts, ignore_index=True)
-
+</code></pre></section><section><h3>After</h3><pre><code>
 amounts = np.array([], dtype=float)
 _fastframe_amounts_parts = [amounts]
-for value in [10.0, 20.0, 30.0, 40.0]:
+for value in df[&quot;price&quot;].to_numpy()[:2_000]:
+    _fastframe_amounts_parts.append(np.atleast_1d(value))
 </code></pre></section></div>
               <h3>Diff</h3>
     <table class="diff" id="difflib_chg_to4__top"
@@ -185,33 +189,29 @@ for value in [10.0, 20.0, 30.0, 40.0]:
         <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
         <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">Before</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">After</th></tr></thead>
         <tbody>
-            <tr><td class="diff_next" id="difflib_chg_to4__1"><a href="#difflib_chg_to4__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to4__1">n</a></td><td class="diff_header" id="to4_1">1</td><td nowrap="nowrap"><span class="diff_add">combined&nbsp;=&nbsp;pd.concat(_fastframe_combined_parts,&nbsp;ignore_index=True)</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from4_1">1</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to4_2">2</td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next" id="difflib_chg_to4__2"></td><td class="diff_header" id="from4_2">2</td><td nowrap="nowrap">amounts&nbsp;=&nbsp;np.array([],&nbsp;dtype=float)</td><td class="diff_next"></td><td class="diff_header" id="to4_3">3</td><td nowrap="nowrap">amounts&nbsp;=&nbsp;np.array([],&nbsp;dtype=float)</td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to4__2">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to4__2">n</a></td><td class="diff_header" id="to4_4">4</td><td nowrap="nowrap"><span class="diff_add">_fastframe_amounts_parts&nbsp;=&nbsp;[amounts]</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from4_3">3</td><td nowrap="nowrap">for&nbsp;value&nbsp;in&nbsp;[10.0,&nbsp;20.0,&nbsp;30.0,&nbsp;40.0]:</td><td class="diff_next"></td><td class="diff_header" id="to4_5">5</td><td nowrap="nowrap">for&nbsp;value&nbsp;in&nbsp;[10.0,&nbsp;20.0,&nbsp;30.0,&nbsp;40.0]:</td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to4__top">t</a></td><td class="diff_header" id="from4_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;amounts&nbsp;=&nbsp;np.append(amounts,&nbsp;value)</span></td><td class="diff_next"><a href="#difflib_chg_to4__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to4__0"><a href="#difflib_chg_to4__0">f</a></td><td class="diff_header" id="from4_1">1</td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to4__0">f</a></td><td class="diff_header" id="to4_1">1</td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next" id="difflib_chg_to4__1"></td><td class="diff_header" id="from4_2">2</td><td nowrap="nowrap">amounts&nbsp;=&nbsp;np.array([],&nbsp;dtype=float)</td><td class="diff_next"></td><td class="diff_header" id="to4_2">2</td><td nowrap="nowrap">amounts&nbsp;=&nbsp;np.array([],&nbsp;dtype=float)</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to4__1">n</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to4__1">n</a></td><td class="diff_header" id="to4_3">3</td><td nowrap="nowrap"><span class="diff_add">_fastframe_amounts_parts&nbsp;=&nbsp;[amounts]</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from4_3">3</td><td nowrap="nowrap">for&nbsp;value&nbsp;in&nbsp;df["price"].to_numpy()[:2_000]:</td><td class="diff_next"></td><td class="diff_header" id="to4_4">4</td><td nowrap="nowrap">for&nbsp;value&nbsp;in&nbsp;df["price"].to_numpy()[:2_000]:</td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to4__top">t</a></td><td class="diff_header" id="from4_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;amounts&nbsp;=&nbsp;np.append(amounts,&nbsp;value)</span></td><td class="diff_next"><a href="#difflib_chg_to4__top">t</a></td><td class="diff_header" id="to4_5">5</td><td nowrap="nowrap"><span class="diff_add">&nbsp;&nbsp;&nbsp;&nbsp;_fastframe_amounts_parts.append(np.atleast_1d(value))</span></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from4_5">5</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
         </tbody>
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP006 · downcastable object/int64/float64 column (manual review)</h2><span class="badge pass">MANUAL REVIEW</span></div>
-              <p class="meta">Line 28, column 13 · Estimated saving: 4 bytes/value</p>
+              <p class="meta">Line 32, column 13 · Estimated saving: 4 bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>No code rewrite; advisory finding only</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
-      <div><strong>Memory</strong><span>-115 bytes (-0.0%)</span></div>
-      <div><strong>Timing</strong><span>0.5535s → 0.5481s</span></div>
+      <div><strong>Speedup</strong><span>advisory only</span></div>
+      <div><strong>Memory</strong><span>advisory only</span></div>
       <div class="status"><span class="badge pass">PASS · manual review</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>    amounts = np.append(amounts, value)
 
 wide_units = df[&quot;units&quot;].astype(&quot;int64&quot;)
-</code></pre></section><section><h3>After</h3><pre><code>_fastframe_amounts_parts = [amounts]
-for value in [10.0, 20.0, 30.0, 40.0]:
-    _fastframe_amounts_parts.append(np.atleast_1d(value))
-amounts = np.concatenate(_fastframe_amounts_parts)
+</code></pre></section><section><h3>After</h3><pre><code>    amounts = np.append(amounts, value)
 
+wide_units = df[&quot;units&quot;].astype(&quot;int64&quot;)
 </code></pre></section></div>
               <h3>Diff</h3>
     <table class="diff" id="difflib_chg_to5__top"
@@ -220,12 +220,7 @@ amounts = np.concatenate(_fastframe_amounts_parts)
         <colgroup></colgroup> <colgroup></colgroup> <colgroup></colgroup>
         <thead><tr><th class="diff_next"><br /></th><th colspan="2" class="diff_header">Before</th><th class="diff_next"><br /></th><th colspan="2" class="diff_header">After</th></tr></thead>
         <tbody>
-            <tr><td class="diff_next" id="difflib_chg_to5__0"><a href="#difflib_chg_to5__1">n</a></td><td class="diff_header" id="from5_1">1</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;amounts&nbsp;=&nbsp;np.append(amounts,&nbsp;value)</span></td><td class="diff_next"><a href="#difflib_chg_to5__1">n</a></td><td class="diff_header" id="to5_1">1</td><td nowrap="nowrap"><span class="diff_add">_fastframe_amounts_parts&nbsp;=&nbsp;[amounts]</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to5_2">2</td><td nowrap="nowrap"><span class="diff_add">for&nbsp;value&nbsp;in&nbsp;[10.0,&nbsp;20.0,&nbsp;30.0,&nbsp;40.0]:</span></td></tr>
-            <tr><td class="diff_next" id="difflib_chg_to5__1"></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to5_3">3</td><td nowrap="nowrap"><span class="diff_add">&nbsp;&nbsp;&nbsp;&nbsp;_fastframe_amounts_parts.append(np.atleast_1d(value))</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to5_4">4</td><td nowrap="nowrap"><span class="diff_add">amounts&nbsp;=&nbsp;np.concatenate(_fastframe_amounts_parts)</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from5_2">2</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to5_5">5</td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to5__top">t</a></td><td class="diff_header" id="from5_3">3</td><td nowrap="nowrap"><span class="diff_sub">wide_units&nbsp;=&nbsp;df["units"].astype("int64")</span></td><td class="diff_next"><a href="#difflib_chg_to5__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to5__top">t</a></td><td></td><td>&nbsp;No Differences Found&nbsp;</td><td class="diff_next"><a href="#difflib_chg_to5__top">t</a></td><td></td><td>&nbsp;No Differences Found&nbsp;</td></tr>
         </tbody>
     </table>
             </article>
