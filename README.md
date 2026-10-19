@@ -63,13 +63,13 @@ Run the CLI from the files copied into the image:
 
 ```bash
 docker run --rm --network none fastframe:buildathon \
-  uv run --no-sync fastframe scan examples/sales_analysis_slow.py
+  scan examples/sales_analysis_slow.py
 ```
 
 Run the complete offline test command:
 
 ```bash
-docker run --rm --network none fastframe:buildathon make test
+docker run --rm --network none --entrypoint make fastframe:buildathon test
 ```
 
 ### With uv
@@ -239,8 +239,24 @@ The same test command works inside the reproducible image without network
 access:
 
 ```bash
-docker run --rm --network none fastframe:buildathon make test
+docker run --rm --network none --entrypoint make fastframe:buildathon test
 ```
+
+The image runs as the non-root `fastframe` user and defaults to the FastFrame
+CLI. Override its entrypoint to run `make test`. Dependencies are installed at
+build time; tests need no network or host virtual environment.
+
+`make test` includes Hypothesis equivalence checks for the rewrite rules and
+statement/branch coverage, enforcing a **90% minimum total coverage**. Quality
+checks use the locked test dependencies:
+
+```bash
+uv run --no-sync ruff check .
+uv run --no-sync mypy
+```
+
+GitHub Actions runs these checks, coverage tests, the Docker build, and the
+network-disabled container test on pushes and pull requests.
 
 ## Limitations
 
@@ -250,8 +266,9 @@ docker run --rm --network none fastframe:buildathon make test
 - Verification compares matching top-level DataFrame, Series, ndarray, and
   list variables. Side effects, external files, databases, and network calls
   are outside the verification model.
-- Benchmarks measure whole-script subprocess startup plus execution. Use a
-  larger real workload and more runs before making performance decisions.
+- Benchmarks preload pandas/NumPy, then time script execution without memory
+  tracing. Memory is measured in separate child runs. Use a larger real workload
+  and more runs before making performance decisions.
 - Scripts must be safe to execute locally; `verify` and `bench` execute the
   supplied files.
 - The current examples are intentionally small. They demonstrate behavior and
