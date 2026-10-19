@@ -1,4 +1,4 @@
 .PHONY: test
 
 test:
-	PYTHONPATH=src python3 -m pytest -q
+	uv run --no-sync pytest -q
