@@ -74,3 +74,18 @@ def test_fix_preserves_pyproject_ignored_python_rule(tmp_path):
     result = runner.invoke(app, ["fix", str(source), "-o", str(output)])
     assert result.exit_code == 0, result.stdout
     assert output.read_text() == source.read_text()
+
+
+def test_fix_verification_failure_is_concise_unless_verbose(tmp_path):
+    source = _script(tmp_path / "source.py", "result = [1]\n")
+    output = tmp_path / "output.py"
+    # A malformed rewritten candidate is easiest to exercise by making the
+    # source itself fail; fix must not write and should summarize the traceback.
+    source.write_text("result = missing_name\n")
+    result = runner.invoke(app, ["fix", str(source), "-o", str(output)])
+    assert result.exit_code == 1
+    assert "NameError at line 1" in result.stdout
+    assert "Traceback" not in result.stdout
+    verbose = runner.invoke(app, ["fix", str(source), "-o", str(output), "--verbose"])
+    assert verbose.exit_code == 1
+    assert "Traceback" in verbose.stdout
