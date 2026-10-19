@@ -13,20 +13,21 @@ df = pd.DataFrame(
         "region": rng.choice(["east", "west", "north", "south"], size=row_count),
     }
 )
+work = df.iloc[:20_000]
 
-row_totals = df.apply(lambda row: row["units"] * row["price"], axis=1)
-scaled_units = df["units"].apply(lambda value: value * 2)
+row_totals = work.apply(lambda row: row["units"] * row["price"], axis=1)
+scaled_units = work["units"].apply(lambda value: value * 2)
 
 values = []
-for _, row in df.iterrows():
+for _, row in work.iterrows():
     values.append(row["units"] * row["price"])
 
-combined = df.iloc[:0]
-for chunk in np.array_split(df, 20):
+combined = work.iloc[:0]
+for chunk in np.array_split(work, 20):
     combined = pd.concat([combined, chunk], ignore_index=True)
 
 amounts = np.array([], dtype=float)
-for value in df["price"].to_numpy()[:2_000]:
+for value in work["price"].to_numpy()[:2_000]:
     amounts = np.append(amounts, value)
 
-wide_units = df["units"].astype("int64")
+wide_units = work["units"].astype("int64")
