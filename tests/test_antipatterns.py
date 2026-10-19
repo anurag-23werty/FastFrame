@@ -42,7 +42,7 @@ def test_np_append_growth_loop_is_rewritten():
     assert rewrite(source) == (
         "_fastframe_arr_parts = [arr]\n"
         "for value in values:\n"
-        "    _fastframe_arr_parts.append(value)\n"
+        "    _fastframe_arr_parts.append(np.atleast_1d(value))\n"
         "arr = np.concatenate(_fastframe_arr_parts)\n"
     )
 

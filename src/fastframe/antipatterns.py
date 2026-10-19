@@ -304,7 +304,12 @@ class _Rewriter(cst.CSTTransformer):
                 suffix = f"pd.concat({name}{options})"
             else:
                 suffix = f"np.concatenate({name})"
-            append_stmt = cst.parse_statement(f"{name}.append({self._code(piece)})\n")
+            append_value = self._code(piece)
+            if growth == "AP005":
+                # np.append accepts scalars, while np.concatenate requires
+                # every item to be at least one-dimensional.
+                append_value = f"np.atleast_1d({append_value})"
+            append_stmt = cst.parse_statement(f"{name}.append({append_value})\n")
             loop = updated.with_changes(body=cst.IndentedBlock(body=(append_stmt,)))
             init = cst.parse_statement(f"{name} = [{target}]\n")
             final = cst.parse_statement(f"{target} = {suffix}\n")
