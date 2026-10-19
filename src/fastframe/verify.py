@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+SUBPROCESS_TIMEOUT_SECONDS = 60
+
 
 _CHILD = r'''
 import base64, io, pickle, runpy, sys
@@ -54,7 +56,15 @@ class VerificationResult:
 
 
 def _run(path: Path) -> Dict[str, Any]:
-    proc = subprocess.run([sys.executable, "-c", _CHILD, str(path)], capture_output=True, text=True)
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-c", _CHILD, str(path)],
+            capture_output=True,
+            text=True,
+            timeout=SUBPROCESS_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"{path}: subprocess timed out after {SUBPROCESS_TIMEOUT_SECONDS}s") from exc
     if proc.returncode:
         detail = proc.stderr.strip() or f"child exited with status {proc.returncode}"
         raise RuntimeError(f"{path}: {detail}")

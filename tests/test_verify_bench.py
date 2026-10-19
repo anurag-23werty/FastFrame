@@ -36,5 +36,6 @@ def test_benchmark_has_configurable_samples_and_metrics():
     result = benchmark(ROOT / "examples/baseline.py", ROOT / "examples/vectorized.py", runs=2)
     assert len(result.original.samples_seconds) == 2
     assert result.original.median_seconds > 0
+    assert result.original.min_seconds <= result.original.median_seconds
     assert result.original.peak_memory_bytes > 0
     assert result.speedup > 0
