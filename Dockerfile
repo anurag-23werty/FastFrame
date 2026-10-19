@@ -7,4 +7,4 @@ COPY pyproject.toml uv.lock .python-version ./
 RUN uv sync --locked --extra test --no-dev
 
 COPY . .
-CMD ["uv", "run", "--no-sync", "fastframe", "--help"]
+CMD ["uv", "run", "--no-sync", "python", "-c", "import fastframe; print('FastFrame core ready')"]
