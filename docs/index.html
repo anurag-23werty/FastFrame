@@ -13,16 +13,16 @@ main{max-width:1180px;margin:0 auto;padding:32px 22px} h1{margin:0 0 4px} h2{fon
 table.diff{width:100%;font:12px ui-monospace,monospace;border-collapse:collapse;overflow:auto;display:block} .diff_header{background:#e8eaed} td{padding:2px 5px;white-space:pre-wrap;vertical-align:top} .diff_add{background:#ceead6} .diff_sub{background:#f7caca} .diff_chg{background:#fce8b2}
 </style></head><body><main>
  <h1>FastFrame anti-pattern report</h1><p class="subtitle">sales_analysis_slow.py · deterministic rewrite and subprocess verification</p>
- <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>0.2852s</strong><span>original median</span></div><div class="metric"><strong>0.0197s</strong><span>rewritten median</span></div><div class="metric"><strong>14.51×</strong><span>speedup</span></div><div class="metric"><strong>+2,051 bytes (+0.0%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
+ <section class="summary"><div class="metric"><strong>6</strong><span>patterns detected</span></div><div class="metric"><strong>0.2910s</strong><span>original median</span></div><div class="metric"><strong>0.0200s</strong><span>rewritten median</span></div><div class="metric"><strong>14.53×</strong><span>speedup</span></div><div class="metric"><strong>+1,981 bytes (+0.0%)</strong><span>peak memory change</span></div><div class="metric"><strong>PASS</strong><span>result verification</span></div></section>
 <article class="pattern">
               <div class="pattern-head"><h2>AP001 · row-wise DataFrame.apply arithmetic</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 18, column 13 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 17, column 13 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.25×</span></div>
+      <div><strong>Speedup</strong><span>1.15×</span></div>
       <div><strong>Memory</strong><span>+1,037 bytes (+0.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2878s → 0.2309s</span></div>
-      <div><strong>Timing min</strong><span>0.2832s → 0.2305s</span></div>
+      <div><strong>Timing median</strong><span>0.2878s → 0.2496s</span></div>
+      <div><strong>Timing min</strong><span>0.2878s → 0.2496s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>work = df.iloc[:20_000]
@@ -52,13 +52,13 @@ scaled_units = work[&quot;units&quot;].apply(lambda value: value * 2)
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP002 · Series.apply arithmetic lambda</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 19, column 15 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 18, column 15 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>1.01×</span></div>
+      <div><strong>Speedup</strong><span>1.00×</span></div>
       <div><strong>Memory</strong><span>+898 bytes (+0.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2822s → 0.2808s</span></div>
-      <div><strong>Timing min</strong><span>0.2793s → 0.2804s</span></div>
+      <div><strong>Timing median</strong><span>0.2808s → 0.2802s</span></div>
+      <div><strong>Timing min</strong><span>0.2808s → 0.2802s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -88,13 +88,13 @@ values = []
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP003 · iterrows arithmetic append-to-list</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 22, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 21, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
-      <div><strong>Speedup</strong><span>3.85×</span></div>
-      <div><strong>Memory</strong><span>+37 bytes (+0.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2823s → 0.0734s</span></div>
-      <div><strong>Timing min</strong><span>0.2751s → 0.0728s</span></div>
+      <div><strong>Speedup</strong><span>2.65×</span></div>
+      <div><strong>Memory</strong><span>-55 bytes (-0.0%)</span></div>
+      <div><strong>Timing median</strong><span>0.2805s → 0.1058s</span></div>
+      <div><strong>Timing min</strong><span>0.2805s → 0.1058s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -105,8 +105,8 @@ for _, row in work.iterrows():
 </code></pre></section><section><h3>After</h3><pre><code>
 values = []
 values.extend((work[&quot;units&quot;] * work[&quot;price&quot;]).tolist())
-
-combined = work.iloc[:0]
+if len(work):
+    row = work.iloc[-1]
 </code></pre></section></div>
               <h3>Diff</h3>
     <table class="diff" id="difflib_chg_to2__top"
@@ -117,21 +117,20 @@ combined = work.iloc[:0]
         <tbody>
             <tr><td class="diff_next" id="difflib_chg_to2__0"><a href="#difflib_chg_to2__0">f</a></td><td class="diff_header" id="from2_1">1</td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to2__0">f</a></td><td class="diff_header" id="to2_1">1</td><td nowrap="nowrap"></td></tr>
             <tr><td class="diff_next"></td><td class="diff_header" id="from2_2">2</td><td nowrap="nowrap">values&nbsp;=&nbsp;[]</td><td class="diff_next"></td><td class="diff_header" id="to2_2">2</td><td nowrap="nowrap">values&nbsp;=&nbsp;[]</td></tr>
-            <tr><td class="diff_next" id="difflib_chg_to2__1"><a href="#difflib_chg_to2__1">n</a></td><td class="diff_header" id="from2_3">3</td><td nowrap="nowrap"><span class="diff_sub">for&nbsp;_,&nbsp;row&nbsp;in&nbsp;work.iterrows():</span></td><td class="diff_next"><a href="#difflib_chg_to2__1">n</a></td><td class="diff_header" id="to2_3">3</td><td nowrap="nowrap"><span class="diff_add">values.extend((work["units"]&nbsp;*&nbsp;work["price"]).tolist())</span></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from2_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;values.append(row["units"]&nbsp;*&nbsp;row["price"])</span></td><td class="diff_next"></td><td class="diff_header"></td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next"></td><td class="diff_header" id="from2_5">5</td><td nowrap="nowrap"></td><td class="diff_next"></td><td class="diff_header" id="to2_4">4</td><td nowrap="nowrap"></td></tr>
-            <tr><td class="diff_next"><a href="#difflib_chg_to2__top">t</a></td><td class="diff_header"></td><td nowrap="nowrap"></td><td class="diff_next"><a href="#difflib_chg_to2__top">t</a></td><td class="diff_header" id="to2_5">5</td><td nowrap="nowrap"><span class="diff_add">combined&nbsp;=&nbsp;work.iloc[:0]</span></td></tr>
+            <tr><td class="diff_next"><a href="#difflib_chg_to2__top">t</a></td><td class="diff_header" id="from2_3">3</td><td nowrap="nowrap"><span class="diff_sub">for&nbsp;_,&nbsp;row&nbsp;in&nbsp;work.iterrows():</span></td><td class="diff_next"><a href="#difflib_chg_to2__top">t</a></td><td class="diff_header" id="to2_3">3</td><td nowrap="nowrap"><span class="diff_add">values.extend((work["units"]&nbsp;*&nbsp;work["price"]).tolist())</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from2_4">4</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;&nbsp;&nbsp;&nbsp;values.append(row["units"]&nbsp;*&nbsp;row["price"])</span></td><td class="diff_next"></td><td class="diff_header" id="to2_4">4</td><td nowrap="nowrap"><span class="diff_add">if&nbsp;len(work):</span></td></tr>
+            <tr><td class="diff_next"></td><td class="diff_header" id="from2_5">5</td><td nowrap="nowrap"><span class="diff_sub">&nbsp;</span></td><td class="diff_next"></td><td class="diff_header" id="to2_5">5</td><td nowrap="nowrap"><span class="diff_add">&nbsp;&nbsp;&nbsp;&nbsp;row&nbsp;=&nbsp;work.iloc[-1]</span></td></tr>
         </tbody>
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP004 · growing DataFrame with concat/append in a loop</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 26, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 25, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
       <div><strong>Speedup</strong><span>1.00×</span></div>
-      <div><strong>Memory</strong><span>-130 bytes (-0.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2800s → 0.2807s</span></div>
-      <div><strong>Timing min</strong><span>0.2778s → 0.2761s</span></div>
+      <div><strong>Memory</strong><span>-131 bytes (-0.0%)</span></div>
+      <div><strong>Timing median</strong><span>0.2801s → 0.2804s</span></div>
+      <div><strong>Timing min</strong><span>0.2801s → 0.2804s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -162,13 +161,13 @@ for chunk in np.array_split(work, 20):
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP005 · growing NumPy array with np.append in a loop</h2><span class="badge pass">PASS</span></div>
-              <p class="meta">Line 30, column 0 · Estimated saving: n/a bytes/value</p>
+              <p class="meta">Line 29, column 0 · Estimated saving: n/a bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>Equivalent outputs</span></div>
       <div><strong>Speedup</strong><span>0.99×</span></div>
-      <div><strong>Memory</strong><span>-191 bytes (-0.0%)</span></div>
-      <div><strong>Timing median</strong><span>0.2803s → 0.2828s</span></div>
-      <div><strong>Timing min</strong><span>0.2786s → 0.2812s</span></div>
+      <div><strong>Memory</strong><span>-137 bytes (-0.0%)</span></div>
+      <div><strong>Timing median</strong><span>0.2843s → 0.2882s</span></div>
+      <div><strong>Timing min</strong><span>0.2843s → 0.2882s</span></div>
       <div class="status"><span class="badge pass">PASS</span></div>
     </div>
               <div class="code-grid"><section><h3>Before</h3><pre><code>
@@ -199,7 +198,7 @@ for value in work[&quot;price&quot;].to_numpy()[:2_000]:
     </table>
             </article><article class="pattern">
               <div class="pattern-head"><h2>AP006 · downcastable object/int64/float64 column (manual review)</h2><span class="badge pass">MANUAL REVIEW</span></div>
-              <p class="meta">Line 33, column 13 · Estimated saving: 4 bytes/value</p>
+              <p class="meta">Line 32, column 13 · Estimated saving: 4 bytes/value</p>
               <div class="pattern-metrics">
       <div><strong>Verify</strong><span>No code rewrite; advisory finding only</span></div>
       <div><strong>Speedup</strong><span>advisory only</span></div>
