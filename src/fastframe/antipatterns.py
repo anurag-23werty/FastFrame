@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import libcst as cst
 from libcst.metadata import CodeRange, MetadataWrapper, PositionProvider
 
 type RewriteResult = cst.CSTNode | cst.FlattenSentinel[cst.BaseStatement] | None
+
+if TYPE_CHECKING:
+    from .policy import ScanConfig
 
 
 @dataclass(frozen=True)
@@ -373,9 +376,12 @@ def detect(source: str) -> list[Finding]:
 
 
 class _Rewriter(cst.CSTTransformer):
-    def __init__(self, pattern: str | None = None, occurrence: int | None = None) -> None:
+    METADATA_DEPENDENCIES = (PositionProvider,)
+
+    def __init__(self, pattern: str | None = None, occurrence: int | None = None, allowed: set[tuple[str, int, int]] | None = None) -> None:
         self.pattern = pattern
         self.occurrence = occurrence
+        self.allowed = allowed
         self._matched = 0
 
     def _rewrite(self, node: cst.CSTNode) -> RewriteResult:
@@ -384,6 +390,10 @@ class _Rewriter(cst.CSTTransformer):
                 continue
             if not rule.match(node):
                 continue
+            if self.allowed is not None:
+                position = self.get_metadata(PositionProvider, node)
+                if (rule.id, position.start.line, position.start.column) not in self.allowed:
+                    continue
             if self.occurrence is not None:
                 self._matched += 1
                 if self._matched != self.occurrence:
@@ -408,11 +418,17 @@ class _Rewriter(cst.CSTTransformer):
         return replacement
 
 
-def rewrite(source: str, pattern: str | None = None, occurrence: int | None = None) -> str:
+def rewrite(source: str, pattern: str | None = None, occurrence: int | None = None, config: ScanConfig | None = None) -> str:
     """Rewrite all rules, or one rule occurrence when requested."""
     if occurrence is not None and occurrence < 1:
         raise ValueError("occurrence must be at least 1")
-    return cst.parse_module(source).visit(_Rewriter(pattern, occurrence)).code
+    allowed = None
+    if config is not None:
+        from .policy import active_findings
+
+        allowed = {(finding.pattern, finding.line, finding.column) for finding in active_findings(source, config)}
+    module = cst.parse_module(source)
+    return MetadataWrapper(module).visit(_Rewriter(pattern, occurrence, allowed)).code
 
 
 rewrite_source = rewrite

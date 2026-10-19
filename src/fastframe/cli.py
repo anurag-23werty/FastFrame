@@ -14,6 +14,7 @@ from rich.table import Table
 
 from .antipatterns import RULES, rewrite, rule_by_id
 from .bench import benchmark
+from .policy import load_config
 from .report import render_report
 from .scan import rewrite_path, scan_path
 from .verify import VerificationResult, verify_scripts
@@ -68,7 +69,7 @@ def fix(
         console.print(f"Wrote {destination}")
         return
     before = file.read_text(encoding="utf-8")
-    after = rewrite(before)
+    after = rewrite(before, config=load_config(file))
     if no_verify:
         console.print("[yellow]Warning: equivalence verification skipped (--no-verify).[/yellow]")
     else:
