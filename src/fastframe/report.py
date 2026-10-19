@@ -73,7 +73,8 @@ def _pattern_metrics(result: PatternResult) -> str:
       <div><strong>Verify</strong><span>{html.escape(verification_text)}</span></div>
       <div><strong>Speedup</strong><span>{metrics.speedup:.2f}×</span></div>
       <div><strong>Memory</strong><span>{metrics.memory_savings_bytes:+,} bytes ({metrics.memory_savings_percent:+.1f}%)</span></div>
-      <div><strong>Timing</strong><span>{metrics.original.median_seconds:.4f}s → {metrics.rewritten.median_seconds:.4f}s</span></div>
+      <div><strong>Timing median</strong><span>{metrics.original.median_seconds:.4f}s → {metrics.rewritten.median_seconds:.4f}s</span></div>
+      <div><strong>Timing min</strong><span>{metrics.original.min_seconds:.4f}s → {metrics.rewritten.min_seconds:.4f}s</span></div>
       <div class="status">{badge}</div>
     </div>'''
 
