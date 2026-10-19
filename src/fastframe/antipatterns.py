@@ -79,6 +79,8 @@ def _safe_expr(node: cst.CSTNode, name: str, *, allow_bare: bool, require_subscr
     if isinstance(node, cst.UnaryOperation):
         return isinstance(node.operator, cst.Minus) and _safe_expr(node.expression, name, allow_bare=allow_bare)
     if isinstance(node, cst.BinaryOperation):
+        if isinstance(node.operator, cst.Power) and isinstance(node.right, cst.UnaryOperation) and isinstance(node.right.operator, cst.Minus) and isinstance(node.right.expression, cst.Integer):
+            return False
         return isinstance(node.operator, _OPS) and _safe_expr(node.left, name, allow_bare=allow_bare) and _safe_expr(node.right, name, allow_bare=allow_bare)
     if isinstance(node, cst.Subscript):
         return (
@@ -109,7 +111,16 @@ def _receiver_safe(receiver: cst.CSTNode) -> bool:
 
 
 def _axis_one(call: cst.Call) -> bool:
-    return any(a.keyword and a.keyword.value == "axis" and isinstance(a.value, cst.Integer) and a.value.value == "1" for a in call.args)
+    return any(
+        a.keyword and a.keyword.value == "axis"
+        and ((isinstance(a.value, cst.Integer) and a.value.value == "1") or (_literal_text(a.value) == "columns"))
+        for a in call.args
+    )
+
+
+def _apply_has_extra_keywords(call: cst.Call, *, rowwise: bool) -> bool:
+    allowed = {"axis"} if rowwise else set()
+    return any(arg.keyword is None or arg.keyword.value not in allowed for arg in call.args[1:])
 
 
 def _replace(node: cst.BaseExpression, name: str, replacement: cst.BaseExpression) -> cst.BaseExpression:
@@ -176,7 +187,7 @@ class ApplyRule(Rule):
     explanation = "Vectorize a safe Series.apply arithmetic lambda."
 
     def match(self, node: cst.CSTNode) -> bool:
-        if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or _axis_one(node):
+        if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or _axis_one(node) or _apply_has_extra_keywords(node, rowwise=False):
             return False
         lam = _lambda(node)
         assert isinstance(node.func, cst.Attribute)
@@ -197,7 +208,7 @@ class RowApplyRule(Rule):
     explanation = "Vectorize a safe row-wise DataFrame.apply arithmetic lambda."
 
     def match(self, node: cst.CSTNode) -> bool:
-        if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or not _axis_one(node):
+        if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or not _axis_one(node) or _apply_has_extra_keywords(node, rowwise=True):
             return False
         lam = _lambda(node)
         assert isinstance(node.func, cst.Attribute)
@@ -210,6 +221,24 @@ class RowApplyRule(Rule):
         assert lam is not None
         assert isinstance(node.func, cst.Attribute)
         return _replace(lam.body, _param(lam) or "", node.func.value)
+
+
+class ManualApplyRule(Rule):
+    """Report apply shapes that are recognizable but unsafe to transform."""
+
+    id = "AP002"
+    title = PATTERN_MESSAGES[id]
+    explanation = "Manual review required: apply has unsupported options or semantics."
+
+    def match(self, node: cst.CSTNode) -> bool:
+        if not isinstance(node, cst.Call) or not _call_attr(node, "apply") or _lambda(node) is None:
+            return False
+        assert isinstance(node.func, cst.Attribute)
+        return _apply_has_extra_keywords(node, rowwise=_axis_one(node))
+
+    def rule_id(self, node: cst.CSTNode) -> str:
+        assert isinstance(node, cst.Call)
+        return "AP001" if _axis_one(node) else "AP002"
 
 
 def _growth(node: cst.For) -> tuple[str, str, cst.Call, cst.BaseExpression] | None:
@@ -334,7 +363,7 @@ class DowncastRule(Rule):
         return isinstance(node, cst.Call) and bool(_call_attr(node, "astype")) and _downcast_dtype(node)
 
 
-RULES: Sequence[Rule] = (RowApplyRule(), ApplyRule(), IterrowsRule(), ConcatRule(), NpAppendRule(), DowncastRule())
+RULES: Sequence[Rule] = (RowApplyRule(), ApplyRule(), ManualApplyRule(), IterrowsRule(), ConcatRule(), NpAppendRule(), DowncastRule())
 
 
 def rule_by_id(pattern: str) -> Rule | None:
@@ -371,7 +400,8 @@ def detect(source: str) -> list[Finding]:
         if rule.id == "AP006":
             assert isinstance(node, cst.Call)
             estimate_bytes = _downcast_saving(node)
-        result.append(Finding(rule.id, pos.start.line, pos.start.column, rule.title, estimate_bytes, rule.id == "AP006"))
+        pattern = rule.rule_id(node) if isinstance(rule, ManualApplyRule) else rule.id
+        result.append(Finding(pattern, pos.start.line, pos.start.column, rule.title, estimate_bytes, rule.id == "AP006" or isinstance(rule, ManualApplyRule)))
     return result
 
 

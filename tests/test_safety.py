@@ -31,3 +31,29 @@ def test_positions_use_each_duplicate_node_not_first_text_match():
         ("AP002", 1, 4),
         ("AP002", 2, 4),
     ]
+
+
+def test_axis_columns_is_rowwise_ap001():
+    source = 'out = df.apply(lambda row: row["a"] + row["b"], axis="columns")\n'
+    findings = detect(source)
+    assert [finding.pattern for finding in findings] == ["AP001"]
+    assert rewrite(source) == 'out = df["a"] + df["b"]\n'
+
+
+def test_apply_extra_keywords_are_manual_review_and_unchanged():
+    cases = [
+        ('out = df.apply(lambda row: row["a"] + row["b"], axis=1, result_type="expand")\n', "AP001"),
+        ('out = df["a"].apply(lambda x: x * 2, raw=True)\n', "AP002"),
+        ('out = df["a"].apply(lambda x: x * 2, args=(1,))\n', "AP002"),
+    ]
+    for source, pattern in cases:
+        findings = detect(source)
+        assert [finding.pattern for finding in findings] == [pattern]
+        assert findings[0].manual_fix
+        assert rewrite(source) == source
+
+
+def test_negative_integer_power_is_not_rewritten():
+    source = 'out = df["a"].apply(lambda x: x ** -2)\n'
+    assert detect(source) == []
+    assert rewrite(source) == source
