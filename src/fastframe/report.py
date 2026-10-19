@@ -82,21 +82,27 @@ def _pattern_results(source_path: Path, source: str, findings: list[Finding], te
     counts: dict[str, int] = {}
     results: list[PatternResult] = []
     for finding in findings:
-        before = _snippet(source, finding)
         if finding.manual_fix:
+            before = _snippet(source, finding)
             results.append(PatternResult(finding, before, before, None, None))
             continue
         counts[finding.pattern] = counts.get(finding.pattern, 0) + 1
-        rewritten = rewrite(source, pattern=finding.pattern, occurrence=counts[finding.pattern])
-        candidate = temp / f"{source_path.stem}-{finding.pattern.lower()}-{counts[finding.pattern]}{source_path.suffix}"
+        focused_path = source_path.parent / "patterns" / f"{finding.pattern.lower()}.py"
+        focused_source_path = focused_path if focused_path.exists() else source_path
+        focused_source = focused_source_path.read_text(encoding="utf-8")
+        focused_findings = detect(focused_source)
+        focused_finding = next((item for item in focused_findings if item.pattern == finding.pattern), finding)
+        before = _snippet(focused_source, focused_finding)
+        rewritten = rewrite(focused_source, pattern=finding.pattern, occurrence=counts[finding.pattern])
+        candidate = temp / f"{focused_source_path.stem}-{finding.pattern.lower()}-{counts[finding.pattern]}{focused_source_path.suffix}"
         candidate.write_text(rewritten, encoding="utf-8")
         results.append(
             PatternResult(
-                finding,
+                focused_finding,
                 before,
-                _snippet(rewritten, finding),
-                verify_scripts(source_path, candidate),
-                benchmark(source_path, candidate, runs=runs),
+                _snippet(rewritten, focused_finding),
+                verify_scripts(focused_source_path, candidate),
+                benchmark(focused_source_path, candidate, runs=runs),
             )
         )
     return results
