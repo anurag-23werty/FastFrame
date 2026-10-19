@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import difflib
+import json
 import os
 import shutil
 import tempfile
@@ -13,9 +14,10 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .antipatterns import detect, rewrite
+from .antipatterns import RULES, detect, rewrite, rule_by_id
 from .bench import benchmark
 from .report import render_report
+from .scan import rewrite_path, scan_path
 from .verify import verify_scripts
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
@@ -23,14 +25,21 @@ console = Console()
 
 
 @app.command()
-def scan(file: Path) -> None:
-    """List detected anti-patterns and suggested fixes."""
-    findings = detect(file.read_text(encoding="utf-8"))
-    table = Table("Pattern", "Line", "Explanation", "Suggested action")
-    for finding in findings:
-        action = "manual review" if finding.manual_fix else "vectorize with fastframe fix"
-        table.add_row(finding.pattern, str(finding.line), finding.message, action)
-    console.print(table if findings else "No anti-patterns detected.")
+def scan(file: Path, format: str = typer.Option("text", "--format")) -> None:
+    """Recursively scan Python files and code cells in Jupyter notebooks."""
+    if format not in {"text", "json"}:
+        raise typer.BadParameter("format must be text or json")
+    findings = scan_path(file)
+    if format == "json":
+        console.print_json(data=[item.as_dict() for item in findings])
+    else:
+        table = Table("Location", "Pattern", "Explanation", "Suggested action")
+        for item in findings:
+            action = "manual review" if item.finding.manual_fix else "vectorize with fastframe fix"
+            table.add_row(item.location, item.finding.pattern, item.finding.message, action)
+        console.print(table if findings else "No anti-patterns detected.")
+    if findings:
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -48,6 +57,20 @@ def fix(
         raise typer.BadParameter("choose either -o/--output or --in-place")
     if not diff and not output and not in_place:
         raise typer.BadParameter("provide -o/--output or --in-place, or use --diff")
+    if file.suffix == ".ipynb":
+        if not no_verify:
+            console.print("[yellow]Notebook fixes are copied without script verification; use --no-verify.[/yellow]")
+            raise typer.Exit(1)
+        if diff:
+            raise typer.BadParameter("--diff is currently supported for Python files only")
+        destination = file if in_place else output
+        if destination is None:
+            raise typer.BadParameter("notebook fixes require -o/--output or --in-place")
+        if in_place:
+            shutil.copy2(file, file.with_name(file.name + ".bak"))
+        rewrite_path(file, destination)
+        console.print(f"Wrote {destination}")
+        return
     before = file.read_text(encoding="utf-8")
     after = rewrite(before)
     if no_verify:
@@ -130,6 +153,34 @@ def report(
     """Generate a self-contained scan, rewrite, verify, and benchmark report."""
     path = render_report(file, html, runs=runs)
     console.print(f"Wrote {path}")
+
+
+@app.command("rules")
+def rules() -> None:
+    """List all built-in detection rules."""
+    table = Table("Rule", "Title", "Explanation")
+    for rule in RULES:
+        table.add_row(rule.id, rule.title, rule.explanation)
+    console.print(table)
+
+
+@app.command()
+def explain(rule: str) -> None:
+    """Explain one rule with a representative before/after example."""
+    selected = rule_by_id(rule)
+    if selected is None:
+        raise typer.BadParameter(f"unknown rule {rule}")
+    examples = {
+        "AP001": ('out = df.apply(lambda row: row["a"] + row["b"], axis=1)', 'out = df["a"] + df["b"]'),
+        "AP002": ('out = df["a"].apply(lambda x: x * 2)', 'out = df["a"] * 2'),
+        "AP003": ('for _, row in df.iterrows():\n    out.append(row["a"] + row["b"])', 'out.extend((df["a"] + df["b"]).tolist())'),
+        "AP004": ('for chunk in chunks:\n    df = pd.concat([df, chunk])', '_parts = [df]\nfor chunk in chunks:\n    _parts.append(chunk)\ndf = pd.concat(_parts)'),
+        "AP005": ('for value in values:\n    arr = np.append(arr, value)', '_parts = [arr]\nfor value in values:\n    _parts.append(np.atleast_1d(value))\narr = np.concatenate(_parts)'),
+        "AP006": ('df["count"] = df["count"].astype("int64")', 'Manual review: pd.to_numeric(df["count"], downcast="integer")'),
+    }
+    before, after = examples[selected.id]
+    console.print(f"[bold]{selected.id}: {selected.title}[/bold]\n{selected.explanation}")
+    console.print("\nBefore:\n" + before + "\n\nAfter:\n" + after)
 
 
 def main() -> None:
