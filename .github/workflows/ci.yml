@@ -1,0 +1,25 @@
+name: Quality and offline Docker tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.26"
+          python-version: "3.12"
+      - run: uv sync --locked --extra test
+      - run: uv run --no-sync ruff check .
+      - run: uv run --no-sync mypy
+      - run: make test
+      - run: docker build -t fastframe:ci .
+      # Override the CLI entrypoint to run the same offline test command.
+      - run: docker run --rm --network none --entrypoint make fastframe:ci test
