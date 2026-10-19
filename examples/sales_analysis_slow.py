@@ -22,8 +22,7 @@ for _, row in df.iterrows():
     values.append(row["units"] * row["price"])
 
 combined = df.iloc[:0]
-chunks = np.array_split(df, 20)
-for chunk in chunks:
+for chunk in np.array_split(df, 20):
     combined = pd.concat([combined, chunk], ignore_index=True)
 
 amounts = np.array([], dtype=float)
